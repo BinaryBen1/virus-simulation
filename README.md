@@ -36,6 +36,8 @@ We would like to thank Dr. Helge Todt for guidance on the project.
 
 - Deutsches Rotes Kreuz: Epidemien und Pandemien: Hilfe bei Infektionsausbrüchen. [Pandemie, Epidemie, Endemie Definitionen](https://www.drk.de/hilfe-weltweit/wann-wir-helfen/katastrophe/epidemien-pandemien/) (last accessed on 31-Oct-2022). 
 
+- AtiByte: Pymunk physics in Pyglet - p11 - collision handler. [Link](https://www.youtube.com/watch?v=ZVDm2Xtp3Lw).
+
 - Arachnid56: City builder tutorial series | Creating the world grid | pygame (#1). [Link](https://www.youtube.com/watch?v=wI_pvfwcPgQ).
 
 - Ear Of Corn Programming: Coronavirus Simulator and Analysis | Pymunk/PyGame Projects. [Link](https://www.youtube.com/watch?v=yJK5J8a7NFs).
