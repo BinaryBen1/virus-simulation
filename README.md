@@ -12,6 +12,10 @@ GIF Example:
 </div>
 -->
 
+## Collision handling and infection spread
+
+When a collision between two shapes occurs, the PyMunk simulator first calls a pre_solve function (in our case the custom collision_begin function).
+We check that the two participating shapes in the collision are both people (a collision could also be a person colliding with a wall). If one of the two participants is infected, and the other one isn't, the infection status will be shared with a infection probability p (currently `0.3`).
 
 ## Train schedule
 
