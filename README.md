@@ -44,4 +44,4 @@ We would like to thank Dr. Helge Todt for guidance on the project.
 
 - [PyGame (game engine) documentation](https://www.pygame.org/docs/)
 
-- [PyMunk (physics engine) documentation](https://www.pymunk.org/en/latest/overview.html)
+- [PyMunk (physics engine) documentation](http://www.pymunk.org/en/latest/pymunk.html)
