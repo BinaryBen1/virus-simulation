@@ -1,5 +1,6 @@
 ## 
 # <div align="center">Simulation of a Coronavirus Epidemic <br/> using a SIR-Model </div>
+######  <div align="center">A university project by Till Zemann & Ben Kampmann.</div>
 
 <!--
 Insert here:
@@ -14,8 +15,8 @@ GIF Example:
 
 ## Train schedule
 
-The train follows a simple loop, where it goes from the top to the bottom and then respawns at the top.
-Each cycle of that loop takes __36k pygame-timesteps__ to complete and contains the following events, __relative to
+The train follows a simple loop. In each cycle it drives from the top to the bottom of the map and then respawns at the top.
+Each cycle takes __36k pygame-timesteps__ to complete and contains the following events, __relative to
 the start of the cycle__ (i.e. 9k steps means start time $t_{\text{start}}$ of the cycle + 9k timesteps).
 
 | Timestep | Event |
@@ -28,6 +29,10 @@ the start of the cycle__ (i.e. 9k steps means start time $t_{\text{start}}$ of t
 
 
 ## Acknowledgements
+
+We would like to thank Dr. Helge Todt for guidance on the project.
+
+## References
 
 - Deutsches Rotes Kreuz: Epidemien und Pandemien: Hilfe bei Infektionsausbrüchen. [Pandemie, Epidemie, Endemie Definitionen](https://www.drk.de/hilfe-weltweit/wann-wir-helfen/katastrophe/epidemien-pandemien/) (last accessed on 31-Oct-2022). 
 
