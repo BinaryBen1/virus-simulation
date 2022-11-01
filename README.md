@@ -52,7 +52,3 @@ We would like to thank Dr. Helge Todt for guidance on the project.
 
 - [PyMunk (physics engine) documentation](http://www.pymunk.org/en/latest/pymunk.html)
 
-
-
-Heil Scheffer
-
