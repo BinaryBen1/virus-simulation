@@ -27,6 +27,7 @@ class CovidSim():
         
         # some useful attributes
         self.draw_dots = draw_dots_for_debugging
+        self.speedup_factor = 1
         self.running = True
         
         # hyperparameters
@@ -125,10 +126,12 @@ class CovidSim():
                 infected_count += 1
         return healthy_count, infected_count
     
-    def run(self, seed=42, max_timestep=3000, return_data=False):
+    def run(self, seed=42, speedup_factor=1, max_timestep=3000, return_data=False):
         # setup
         random.seed(seed)
         self.running = True
+        self.speedup_factor = speedup_factor
+        self.status_counts = [] # reset status counts
 
         # create the pygame-screen
         self.screen = pg.display.set_mode((self.screen_size, self.screen_size))
@@ -168,7 +171,7 @@ class CovidSim():
         while self.running:
 
             self.clock.tick(self.FPS)   # update pygame time
-            self.world.step(1/self.FPS) # keeps rendered steps/s consistent (independent of self.FPS)
+            self.world.step(self.speedup_factor/self.FPS) # keeps rendered steps/s consistent (independent of self.FPS)
             timestep += 1
             
             # handle mouse and keyboard events
