@@ -17,13 +17,12 @@ class CovidSim():
     def __init__(self, n_people, infection_prob, draw_dots_for_debugging, FPS=60):
         # sim setup
         self.n_people = n_people
+        self.status_counts = [] # will be filled with 3-tuples of counts of how many people are healthy/infected/recovered at runtime
         self.pf = None # will be set later
 
         # visuals setup
         self.screen_size = 800
-        self.screen = pg.display.set_mode((self.screen_size, self.screen_size))
-        self.width, self.height = self.screen.get_size()
-        self.clock = pg.time.Clock()
+        self.width, self.height = (self.screen_size, self.screen_size)
         self.FPS = FPS
         
         # some useful attributes
@@ -32,12 +31,15 @@ class CovidSim():
         
         # hyperparameters
         self.infection_prob = infection_prob
-        
-        # add logo and caption
-        logo = pg.image.load('images/virus_logo.png')
-        pg.display.set_icon(logo)
-        pg.display.set_caption('COVID19-Sim')
-        
+
+        # setup screen_borders, buildings
+        self.world = None
+        self.screen_borders = None
+        self.buildings = None
+        self.create_world()
+    
+
+    def create_world(self):
         # create the simulated world
         self.world = pymunk.Space()
         
@@ -84,7 +86,7 @@ class CovidSim():
             #self._create_tile(origin_pos=(500,600), tile_type='building_30'),
             #self._create_tile(origin_pos=(500,600), tile_type='building_31'),
         ]
-    
+
     def collision_begin(self, arbiter, space, data):
         """ 
         This custom pre-collision-handling method handles infection spreading 
@@ -110,10 +112,35 @@ class CovidSim():
                     if random.random() < self.infection_prob:
                         shape.density = 0.9
         return True
+
+    def get_status_counts(self):
+        status_list = ["infected" if person.infected else "healthy" for person in self.people]
+        healthy_count = 0
+        infected_count = 0
+
+        for status in status_list:
+            if status == "healthy":
+                healthy_count += 1
+            elif status == "infected":
+                infected_count += 1
+        return healthy_count, infected_count
     
-    def run(self, seed=42):
+    def run(self, seed=42, max_timestep=3000, return_data=False):
         # setup
         random.seed(seed)
+        self.running = True
+
+        # create the pygame-screen
+        self.screen = pg.display.set_mode((self.screen_size, self.screen_size))
+        self.clock = pg.time.Clock()
+
+        # add logo and caption
+        logo = pg.image.load('images/virus_logo.png')
+        pg.display.set_icon(logo)
+        pg.display.set_caption('COVID19-Sim')
+
+        # create the particle simulation
+        self.create_world()
 
         # add people to the simulation
         self.people = [Person(world=self.world,
@@ -122,7 +149,6 @@ class CovidSim():
                               y_init=random.randint(0, self.screen_size),
                               collision_radius=4,)
                        for i in range(self.n_people)]
-        
     
         # define custom collision handler (collision might spread infection status)        
         self.handler = self.world.add_default_collision_handler()
@@ -137,13 +163,13 @@ class CovidSim():
         self.train = Train(world=self.world,
                            start_pos=(70, 5),
                            wall_thickness=3)
-        
-        # setup np-arrays for data
 
+        timestep = 0
         while self.running:
 
             self.clock.tick(self.FPS)   # update pygame time
             self.world.step(1/self.FPS) # keeps rendered steps/s consistent (independent of self.FPS)
+            timestep += 1
             
             # handle mouse and keyboard events
             self.events()
@@ -159,8 +185,22 @@ class CovidSim():
             if self.running:
                 self.draw(self.draw_dots)
                             
-            # save logs
-            # evaluate later
+            # save counts of how many people are healthy/infected/recovered
+            healthy_count, infected_count = self.get_status_counts()
+            self.status_counts.append((healthy_count, infected_count))
+
+            # check if maximum simulation time is reached
+            if timestep >= max_timestep:
+                break
+            
+        pg.quit()
+
+        # return collected data (healthy/infected/recovered counts)
+        if return_data:
+            healthy_counts = [status_tuple[0] for status_tuple in self.status_counts]
+            infected_counts = [status_tuple[1] for status_tuple in self.status_counts]
+            return healthy_counts, infected_counts
+
     
     def events(self):
         for event in pg.event.get():
