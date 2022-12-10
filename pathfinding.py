@@ -3,6 +3,7 @@ import pymunk # simulates in C -> fast
 import numpy as np
 import skimage.measure as measure # for 2d max pooling (pip install scikit-image)
 import random
+import os
 
 class Node():
     def __init__(self, coordinates, distance=None):
@@ -134,6 +135,9 @@ class Pathfinder():
     
 
     def save_heatmap_tensor(self):
+        if not os.path.exists("heatmaps"):
+            os.mkdir("heatmaps")
+    
         np.save("heatmaps/heatmap_tensor.npy", self.heatmap_tensor)
         print("saved heatmap_tensor with shape", self.heatmap_tensor.shape)
 
@@ -186,8 +190,6 @@ class Pathfinder():
         for coordinates, node in self.visited.items():
             heatmap[coordinates] = node.distance
             
-        # make a vector field here by applying convolution
-        self.heatmap = heatmap ########### needed for current simulation with only 1 heatmap # !!!!! später diese line rausnehmen
         return heatmap
     
     
@@ -238,8 +240,6 @@ class Pathfinder():
         best_distance = np.inf
         for neighbor in neighbors:
             # print(neighbor.coordinates(), heatmap[neighbor.coordinates()])
-            
-            ### neighbor_distance = self.heatmap[neighbor.coordinates()] ### old: from version with only one heatmap
             neighbor_distance = self.heatmap_tensor[target_building][neighbor.coordinates()]
             
             if neighbor_distance < best_distance:
