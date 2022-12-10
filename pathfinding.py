@@ -103,31 +103,45 @@ class Queue():
 
 class Pathfinder():
     
-    def __init__(self, sim, target_coordinates):        
-        # targets = []
-        self.target_coordinates = target_coordinates
-        
-        # create the target node(s)
-        self.target_node = Node(
-            coordinates=self.target_coordinates, 
-            distance=0)
-        
-        # for each target:
-        # - create queue
-        # - create heatmap with queue
-        #
-        # - append to self.heatmaps (dict with targets as keys)
-        
-        # initialize the queue
-        # self.q1 = Queue(self.target_node)
-        # self.create_heatmap(queue1)
-        self.heatmap = None # will be created later
+    def __init__(self, sim, use_precomputed_heatmaps):        
 
         self.world_array = self.create_world_array(sim)
+
+        self.targets = [(random.randint(0, 800), random.randint(0, 800)) for i in range(3)] # specify list of real targets here
+        n_targets = len(self.targets)
+        self.heatmap_tensor = None # will be initialized in the following lines 
+
+        if use_precomputed_heatmaps:
+            self.load_heatmap_tensor()
+
+        else:
+            # compute the heatmaps for all targets
+            self.heatmap_tensor = np.empty((n_targets, 800, 800))
+            print("computing heatmaps with shape", self.heatmap_tensor.shape, "[this may take a while!]")
+
+            for i, target in enumerate(self.targets):
+                print(f"creating heatmap... [{i+1}/{n_targets}]")
+
+                # create the target node
+                target_node = Node(coordinates=target, distance=0)
+
+                # create the heatmap for that target node
+                self.heatmap_tensor[i] = self.create_heatmap(target_node)
+            self.save_heatmap_tensor()
 
         # add the instanciated pathfinder to the given simulator
         sim.pf = self
     
+
+    def save_heatmap_tensor(self):
+        np.save("heatmaps/heatmap_tensor.npy", self.heatmap_tensor)
+        print("saved heatmap_tensor with shape", self.heatmap_tensor.shape)
+
+    
+    def load_heatmap_tensor(self):
+        self.heatmap_tensor = np.load("heatmaps/heatmap_tensor.npy")
+        print("using precomputed heatmaps with shape", self.heatmap_tensor.shape)
+
 
     def create_world_array(self, sim):
         # model the world as an array of 0s and 1s for pathfinding
@@ -154,8 +168,11 @@ class Pathfinder():
         return world_array
         
     
-    def create_heatmap(self, queue): # vector field
+    def create_heatmap(self, target_node): # vector field
         """ Creates a heatmap starting from the target coordinates. """
+        # create a Queue object that is used to store nodes while searching
+        queue = Queue(target_node)
+
         # expand the heatmap as long as there are nodes with no distance to the target
         self.visited = dict() # dict that maps coordinates to the corresponding node
         
@@ -170,7 +187,8 @@ class Pathfinder():
             heatmap[coordinates] = node.distance
             
         # make a vector field here by applying convolution
-        self.heatmap = heatmap
+        self.heatmap = heatmap ########### needed for current simulation with only 1 heatmap # !!!!! später diese line rausnehmen
+        return heatmap
     
     
     def expand_heatmap(self, queue, current_node):
@@ -208,7 +226,7 @@ class Pathfinder():
                     neighbor.distance = current_node.distance + current_node.distance_to_neighbor(neighbor)
 
                     
-    def get_direction(self, current_position, target) -> tuple: # -> set direction as new velocity
+    def get_direction(self, current_position, target_building) -> tuple: # -> set direction as new velocity
         """
         Returns the (x,y) direction vector that follows the shortest path to the target.
         """
@@ -221,7 +239,9 @@ class Pathfinder():
         for neighbor in neighbors:
             # print(neighbor.coordinates(), heatmap[neighbor.coordinates()])
             
-            neighbor_distance = self.heatmap[neighbor.coordinates()]
+            ### neighbor_distance = self.heatmap[neighbor.coordinates()] ### old: from version with only one heatmap
+            neighbor_distance = self.heatmap_tensor[target_building][neighbor.coordinates()]
+            
             if neighbor_distance < best_distance:
                 best_neighbor = neighbor
                 best_distance = neighbor_distance

@@ -38,6 +38,7 @@ class Person():
         # - goal_location (drawn from random distribuition, with probabilities dependend on subject)
         # -> i.e. physicists are more likely to go to the physics building
         # - age (drawn from random distribuition)
+        self.target_building = random.randint(0, 2) # [inklusive der 2. Zahl!!] do a proper random timetable here
         
         # add the person to the simulation
         world.add(self.body, self.shape)
@@ -57,16 +58,17 @@ class Person():
         # x = round(x, -1) / 10 # round to nearest 10 and normalize to [0, 80]
         # y = round(y, -1) / 10 # round to nearest 10 and normalize to [0, 80]
         discrete_position = (int(x), int(y))
-        x_velocity, y_velocity = self.pf.get_direction(discrete_position, target=None)
+        x_velocity, y_velocity = self.pf.get_direction(discrete_position, target_building=self.target_building)
         
         # scale the velocity by the velocity multiplier
         x_velocity = velocity_multiplier * x_velocity
         y_velocity = velocity_multiplier * y_velocity
         
         old_velocity = self.body.velocity
-        
-        new_x_velocity = (1-vel_update_rate) * old_velocity[0] + vel_update_rate * x_velocity
-        new_y_velocity = (1-vel_update_rate) * old_velocity[1] + vel_update_rate * y_velocity
+        additive_x_noise = 5 * random.random() -2.5 # [-2.5 - 2.5]
+        additive_y_noise = 5 * random.random() -2.5 # [-2.5 - 2.5]
+        new_x_velocity = (1-vel_update_rate) * old_velocity[0] + vel_update_rate * x_velocity + additive_x_noise
+        new_y_velocity = (1-vel_update_rate) * old_velocity[1] + vel_update_rate * y_velocity + additive_y_noise
         
         self.body.velocity = (new_x_velocity, new_y_velocity)
     
