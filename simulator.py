@@ -49,48 +49,60 @@ class CovidSim():
             Wall(world=self.world, start_pos=(0, 0), end_pos=(800, 0), thickness=1), # top-right
             Wall(world=self.world, start_pos=(0, 0), end_pos=(0, 800), thickness=1), # top-down (left)
             Wall(world=self.world, start_pos=(800, 0), end_pos=(800, 800), thickness=1), # top-down(right)
+
+            # make two walls at the bottom to leave a hole for the train to pass through
             Wall(world=self.world, start_pos=(0, 800), end_pos=(110, 800), thickness=1), # bot-right
             Wall(world=self.world, start_pos=(130, 800), end_pos=(800, 800), thickness=1)] # bot-right
         
         # create walls for buildings
         self.buildings = [
             self._create_tile(origin_pos=(630,490), tile_type='building_1'),
-            self._create_tile(origin_pos=(620,450), tile_type='building_2'),
+            self._create_tile(origin_pos=(620,440), tile_type='building_2'),
             self._create_tile(origin_pos=(700,530), tile_type='building_3'),
             self._create_tile(origin_pos=(690,430), tile_type='building_4'),
             self._create_tile(origin_pos=(700,310), tile_type='building_5'),
             self._create_tile(origin_pos=(630,310), tile_type='building_6'),
-            #self._create_tile(origin_pos=(500,600), tile_type='building_7'),
-            #self._create_tile(origin_pos=(500,600), tile_type='building_8'),
-            #self._create_tile(origin_pos=(500,600), tile_type='building_9'),
-            #self._create_tile(origin_pos=(500,600), tile_type='building_10'),
-            #self._create_tile(origin_pos=(500,600), tile_type='building_11'),
-            #self._create_tile(origin_pos=(500,600), tile_type='building_12'),
-            #self._create_tile(origin_pos=(500,600), tile_type='building_13'),
-            #self._create_tile(origin_pos=(500,600), tile_type='building_14'),
-            #self._create_tile(origin_pos=(500,600), tile_type='building_14a'),
-            #self._create_tile(origin_pos=(500,600), tile_type='building_15'),
-            #self._create_tile(origin_pos=(500,600), tile_type='building_16'),
-            #self._create_tile(origin_pos=(500,600), tile_type='building_17'),
-            #self._create_tile(origin_pos=(500,600), tile_type='building_18'),
-            #self._create_tile(origin_pos=(500,600), tile_type='building_19'),
-            #self._create_tile(origin_pos=(500,600), tile_type='building_20'),
-            #self._create_tile(origin_pos=(500,600), tile_type='building_21'),
-            #self._create_tile(origin_pos=(500,600), tile_type='building_22'),
-            #self._create_tile(origin_pos=(500,600), tile_type='building_23'),
-            #self._create_tile(origin_pos=(500,600), tile_type='building_24'),
-            #self._create_tile(origin_pos=(500,600), tile_type='building_25'),
-            #self._create_tile(origin_pos=(500,600), tile_type='building_26'),
-            #self._create_tile(origin_pos=(500,600), tile_type='building_27'),
-            #self._create_tile(origin_pos=(500,600), tile_type='building_28'),
-            #self._create_tile(origin_pos=(500,600), tile_type='building_29'),
-            #self._create_tile(origin_pos=(500,600), tile_type='building_30'),
-            #self._create_tile(origin_pos=(500,600), tile_type='building_31'),
+            self._create_tile(origin_pos=(630,340), tile_type='building_7'),
+            self._create_tile(origin_pos=(490,340), tile_type='building_8'),
+            self._create_tile(origin_pos=(570,390), tile_type='building_9'),
+            self._create_tile(origin_pos=(490,480), tile_type='building_10'),
+            self._create_tile(origin_pos=(490,550), tile_type='building_11'),
+            self._create_tile(origin_pos=(760,280), tile_type='building_12'),
+            self._create_tile(origin_pos=(720,530), tile_type='building_13'),
+            self._create_tile(origin_pos=(340,520), tile_type='building_14'),
+            self._create_tile(origin_pos=(370,520), tile_type='building_14a'),
+            self._create_tile(origin_pos=(280,600), tile_type='building_15'),
+            self._create_tile(origin_pos=(280,560), tile_type='building_16'),
+            self._create_tile(origin_pos=(280,520), tile_type='building_17'),
+            #self._create_tile(origin_pos=(XXX), tile_type='building_18'),
+            self._create_tile(origin_pos=(450,700), tile_type='building_19'),
+            self._create_tile(origin_pos=(570,680), tile_type='building_20'),
+            self._create_tile(origin_pos=(630,600), tile_type='BUD'),
+            self._create_tile(origin_pos=(230,430), tile_type='IKMZ'),
+            #self._create_tile(origin_pos=(XXX), tile_type='building_23'),
+            self._create_tile(origin_pos=(490,620), tile_type='building_24'),
+            self._create_tile(origin_pos=(260,100), tile_type='building_25'),
+            self._create_tile(origin_pos=(390,100), tile_type='building_26'),
+            self._create_tile(origin_pos=(350,290), tile_type='building_27'),
+            self._create_tile(origin_pos=(250,280), tile_type='building_28'),
+            self._create_tile(origin_pos=(350,340), tile_type='building_29'),
+            #self._create_tile(origin_pos=(XXX), tile_type='building_30'),
+            self._create_tile(origin_pos=(440,550), tile_type='building_31'),
+            self._create_tile(origin_pos=(520,680), tile_type='building_35'),
         ]
 
     def collision_begin(self, arbiter, space, data):
         """ 
-        This custom pre-collision-handling method handles infection spreading 
+        This custom pre-collision-handling method handles infection spreading        if tile_type == 'building_7':
+            tile_walls = [
+                # create main walls
+                Wall(world=self.world, start_pos=(x, y+10), end_pos=(x+20, y+10)), # top-right
+                Wall(world=self.world, start_pos=(x, y+10), end_pos=(x, y+70)), # top-down(left)
+                Wall(world=self.world, start_pos=(x, y+70), end_pos=(x+20, y+70)), # bot-right
+                # create half-open wall
+                Wall(world=self.world, start_pos=(x+20, y+10), end_pos=(x+20, y+30)), # top-down(right)
+                Wall(world=self.world, start_pos=(x+20, y+60), end_pos=(x+20, y+70)),# top-down(right)
+            ] 
         when two persons collide.
         It also has to return True so the default PyMunk collision handler can handle 
         changes of physical attributes afterwards (e.g. updating the velocity).
@@ -277,7 +289,6 @@ class CovidSim():
                 Wall(world=self.world, start_pos=(x, y+80), end_pos=(x+20, y+80)),
                 Wall(world=self.world, start_pos=(x+60, y+80), end_pos=(x+80, y+80))
             ]
-        # RIGHT-OPEN, LONG
         if tile_type == 'building_1':
             tile_walls = [
                 # create main walls
@@ -288,7 +299,6 @@ class CovidSim():
                 Wall(world=self.world, start_pos=(x+20, y), end_pos=(x+20, y+30)), # top-down(right)
                 Wall(world=self.world, start_pos=(x+20, y+60), end_pos=(x+20, y+80)),# top-down(right)
             ]
-        # RIGHT-OPEN, SMALL SQUARE
         if tile_type == 'building_2':
             tile_walls = [
                 # create main walls
@@ -298,7 +308,6 @@ class CovidSim():
                 # create half-open wall
                 Wall(world=self.world, start_pos=(x+30, y+20), end_pos=(x+30, y+30)), # top-down(right)
             ]
-        # LEFT-OPEN, LONG
         if tile_type == 'building_3':
             tile_walls = [
                 # create main walls
@@ -309,7 +318,6 @@ class CovidSim():
                 Wall(world=self.world, start_pos=(x, y), end_pos=(x, y+30)), # top-down(left)
                 Wall(world=self.world, start_pos=(x, y+60), end_pos=(x, y+80)),# top-down(left)
             ]
-        # LEFT-OPEN, MEDIUM
         if tile_type == 'building_4':
             tile_walls = [
                 # create main walls
@@ -320,7 +328,6 @@ class CovidSim():
                 Wall(world=self.world, start_pos=(x, y), end_pos=(x, y+20)), # top-down(left)
                 Wall(world=self.world, start_pos=(x, y+40), end_pos=(x, y+50)),# top-down(left)
             ]
-        # L-shape
         if tile_type == 'building_5':
             tile_walls = [
                 # create main walls
@@ -334,7 +341,6 @@ class CovidSim():
                 Wall(world=self.world, start_pos=(x, y+90), end_pos=(x+60, y+90)), # bot-right
                 Wall(world=self.world, start_pos=(x+60, y+60), end_pos=(x+60, y+90)), # top-down(right)
             ]
-        # RIGHT-OPEN, SMALL SQUARE
         if tile_type == 'building_6':
             tile_walls = [
                 # create main walls
@@ -345,5 +351,243 @@ class CovidSim():
                 Wall(world=self.world, start_pos=(x, y+20), end_pos=(x+20, y+20)), # bot-right
                 Wall(world=self.world, start_pos=(x+40, y+20), end_pos=(x+50, y+20)), # bot-right
             ]
-        
+        if tile_type == 'building_7':
+            tile_walls = [
+                # create main walls
+                Wall(world=self.world, start_pos=(x, y+10), end_pos=(x+20, y+10)), # top-right
+                Wall(world=self.world, start_pos=(x, y+10), end_pos=(x, y+70)), # top-down(left)
+                Wall(world=self.world, start_pos=(x, y+70), end_pos=(x+20, y+70)), # bot-right
+                # create half-open wall
+                Wall(world=self.world, start_pos=(x+20, y+10), end_pos=(x+20, y+30)), # top-down(right)
+                Wall(world=self.world, start_pos=(x+20, y+60), end_pos=(x+20, y+70)),# top-down(right)
+            ]
+        if tile_type == 'building_8':
+            tile_walls = [
+                # create main walls
+                Wall(world=self.world, start_pos=(x, y), end_pos=(x+60, y)), # top-right
+                Wall(world=self.world, start_pos=(x, y), end_pos=(x, y+30)), # top-down(left)
+                Wall(world=self.world, start_pos=(x, y+30), end_pos=(x+30, y+30)), # bot-left (left of door)
+
+                Wall(world=self.world, start_pos=(x+60, y), end_pos=(x+60, y-50)), # top-up
+                Wall(world=self.world, start_pos=(x+60, y-50), end_pos=(x+90, y-50)), # top-up-right
+                Wall(world=self.world, start_pos=(x+90, y-50), end_pos=(x+90, y+30)), # top-up-right-down
+                Wall(world=self.world, start_pos=(x+60, y+30), end_pos=(x+90, y+30)), # right of door (bot-right)
+            ]
+        if tile_type == 'building_9':
+            tile_walls = [
+                # create main walls
+                Wall(world=self.world, start_pos=(x, y+10), end_pos=(x+20, y+10)), # top-right
+                Wall(world=self.world, start_pos=(x, y+10), end_pos=(x, y+70)), # top-down(left)
+                Wall(world=self.world, start_pos=(x, y+70), end_pos=(x+20, y+70)), # bot-right
+                # create half-open wall
+                Wall(world=self.world, start_pos=(x+20, y+10), end_pos=(x+20, y+30)), # top-down(right)
+                Wall(world=self.world, start_pos=(x+20, y+60), end_pos=(x+20, y+70)),# top-down(right)
+            ]
+        if tile_type == 'building_10':
+            tile_walls = [
+                # create main walls
+                Wall(world=self.world, start_pos=(x, y), end_pos=(x+80, y)), # top-right
+                Wall(world=self.world, start_pos=(x, y), end_pos=(x, y+40)), # top-down(left)
+                Wall(world=self.world, start_pos=(x, y+40), end_pos=(x+30, y+40)), # bot-left (left of door)
+
+                Wall(world=self.world, start_pos=(x+80, y), end_pos=(x+80, y-20)), # top-up
+                Wall(world=self.world, start_pos=(x+80, y-20), end_pos=(x+100, y-20)), # top-up-right
+                Wall(world=self.world, start_pos=(x+100, y-20), end_pos=(x+100, y+40)), # top-up-right-down
+                Wall(world=self.world, start_pos=(x+70, y+40), end_pos=(x+100, y+40)), # right of door (bot-right)
+            ]
+        if tile_type == 'building_11':
+            tile_walls = [
+                # create half-open wall
+                Wall(world=self.world, start_pos=(x+30, y), end_pos=(x+100, y)), # top-right
+
+                # main walls
+                Wall(world=self.world, start_pos=(x, y), end_pos=(x, y+40)), # top-down(left)
+                Wall(world=self.world, start_pos=(x+100, y), end_pos=(x+100, y+40)), # top-down(right)
+                Wall(world=self.world, start_pos=(x, y+40), end_pos=(x+100, y+40)), # bot-right
+            ]
+        if tile_type == 'building_12':
+            tile_walls = [
+
+                Wall(world=self.world, start_pos=(x, y+40), end_pos=(x, y+70)), # top-down(left)
+
+                # create main walls
+                Wall(world=self.world, start_pos=(x, y+10), end_pos=(x+20, y+10)), # top-right
+                Wall(world=self.world, start_pos=(x, y+70), end_pos=(x+20, y+70)), # bot-right
+                # create half-open wall
+                Wall(world=self.world, start_pos=(x+20, y+10), end_pos=(x+20, y+70)), # top-down(right)
+            ]
+        if tile_type == 'building_13':
+            tile_walls = [
+                # create main walls
+                Wall(world=self.world, start_pos=(x+20, y), end_pos=(x+30, y)), # top-right
+                Wall(world=self.world, start_pos=(x, y), end_pos=(x, y+30)), # top-down(left)
+                Wall(world=self.world, start_pos=(x, y+30), end_pos=(x+30, y+30)), # bot-right
+                # create half-open wall
+                Wall(world=self.world, start_pos=(x+30, y), end_pos=(x+30, y+30)), # top-down(right)
+            ]
+        if tile_type == 'building_14':
+            tile_walls = [
+                # create main walls
+                Wall(world=self.world, start_pos=(x, y), end_pos=(x+20, y)), # top-right
+                Wall(world=self.world, start_pos=(x+20, y), end_pos=(x+20, y+90)), # top-down(right)
+                Wall(world=self.world, start_pos=(x, y+90), end_pos=(x+20, y+90)), # bot-right
+                # create half-open wall
+                Wall(world=self.world, start_pos=(x, y), end_pos=(x, y+20)), # top-down(left)
+                Wall(world=self.world, start_pos=(x, y+50), end_pos=(x, y+90)),# top-down(left)
+            ]
+        if tile_type == 'building_14a':
+            tile_walls = [
+                # create main walls
+                Wall(world=self.world, start_pos=(x+20, y), end_pos=(x+40, y)), # top-right
+                Wall(world=self.world, start_pos=(x-10, y), end_pos=(x-10, y+30)), # top-down(left)
+                Wall(world=self.world, start_pos=(x-10, y+30), end_pos=(x+40, y+30)), # bot-right
+                # create half-open wall
+                Wall(world=self.world, start_pos=(x+40, y), end_pos=(x+40, y+30)), # top-down(right)
+            ]
+        if tile_type == 'building_15':
+            tile_walls = [
+                # create main walls
+                Wall(world=self.world, start_pos=(x, y), end_pos=(x+40, y)), # top-right
+                Wall(world=self.world, start_pos=(x, y), end_pos=(x, y+20)), # top-down(left)
+                # create half-open wall
+                Wall(world=self.world, start_pos=(x, y+20), end_pos=(x+40, y+20)), # bot-right
+            ]
+        if tile_type == 'building_16':
+            tile_walls = [
+                # create main walls
+                Wall(world=self.world, start_pos=(x, y), end_pos=(x+40, y)), # top-right
+                Wall(world=self.world, start_pos=(x, y), end_pos=(x, y+20)), # top-down(left)
+                # create half-open wall
+                Wall(world=self.world, start_pos=(x, y+20), end_pos=(x+40, y+20)), # bot-right
+            ]
+        if tile_type == 'building_17':
+            tile_walls = [
+                # create main walls
+                Wall(world=self.world, start_pos=(x, y), end_pos=(x+40, y)), # top-right
+                Wall(world=self.world, start_pos=(x, y), end_pos=(x, y+20)), # top-down(left)
+                # create half-open wall
+                Wall(world=self.world, start_pos=(x, y+20), end_pos=(x+40, y+20)), # bot-right
+            ]
+
+        # building 18 is not on the map.
+
+        if tile_type == 'building_19':
+            tile_walls = [
+                # create main walls
+                Wall(world=self.world, start_pos=(x+30, y), end_pos=(x+50, y)), # top-right
+                Wall(world=self.world, start_pos=(x, y), end_pos=(x, y+50)), # top-down(left)
+                Wall(world=self.world, start_pos=(x, y+50), end_pos=(x+50, y+50)), # bot-right
+                # create half-open wall
+                Wall(world=self.world, start_pos=(x+50, y), end_pos=(x+50, y+50)), # top-down(right)
+            ]
+        if tile_type == 'building_20':
+            tile_walls = [
+                # create main walls
+                Wall(world=self.world, start_pos=(x+20, y), end_pos=(x+40, y)), # top-right
+                Wall(world=self.world, start_pos=(x-10, y), end_pos=(x-10, y+30)), # top-down(left)
+                Wall(world=self.world, start_pos=(x-10, y+30), end_pos=(x+40, y+30)), # bot-right
+                # create half-open wall
+                Wall(world=self.world, start_pos=(x+40, y), end_pos=(x+40, y+30)), # top-down(right)
+            ]
+        if tile_type == 'BUD':
+            tile_walls = [
+                # create main walls
+                Wall(world=self.world, start_pos=(x+30, y), end_pos=(x+40, y)), # top-right
+                Wall(world=self.world, start_pos=(x, y), end_pos=(x, y+50)), # top-down(left)
+                Wall(world=self.world, start_pos=(x, y+50), end_pos=(x+40, y+50)), # bot-right
+                # create half-open wall
+                Wall(world=self.world, start_pos=(x+40, y), end_pos=(x+40, y+50)), # top-down(right)
+            ]
+        if tile_type == 'IKMZ':
+            tile_walls = [
+                # create main walls
+                Wall(world=self.world, start_pos=(x+30, y), end_pos=(x+70, y)), # top-right
+                Wall(world=self.world, start_pos=(x, y), end_pos=(x, y+60)), # top-down(left)
+                Wall(world=self.world, start_pos=(x, y+60), end_pos=(x+70, y+60)), # bot-right
+                # create half-open wall
+                Wall(world=self.world, start_pos=(x+70, y), end_pos=(x+70, y+60)), # top-down(right)
+            ]
+        if tile_type == 'building_24':
+            tile_walls = [
+                # create main walls
+                Wall(world=self.world, start_pos=(x, y), end_pos=(x+80, y)), # top-right
+                Wall(world=self.world, start_pos=(x, y), end_pos=(x, y+30)), # top-down(left)
+                Wall(world=self.world, start_pos=(x, y+30), end_pos=(x+30, y+30)), # bot-left (left of door)
+
+                Wall(world=self.world, start_pos=(x+80, y), end_pos=(x+80, y-30)), # top-up
+                Wall(world=self.world, start_pos=(x+80, y-30), end_pos=(x+100, y-30)), # top-up-right
+                Wall(world=self.world, start_pos=(x+100, y-30), end_pos=(x+100, y+30)), # top-up-right-down
+                Wall(world=self.world, start_pos=(x+70, y+30), end_pos=(x+100, y+30)), # right of door (bot-right)
+            ]
+        if tile_type == 'building_35':
+            tile_walls = [
+                # create main walls
+                Wall(world=self.world, start_pos=(x+30, y), end_pos=(x+40, y)), # top-right
+                Wall(world=self.world, start_pos=(x, y), end_pos=(x, y+30)), # top-down(left)
+                Wall(world=self.world, start_pos=(x, y+30), end_pos=(x+40, y+30)), # bot-right
+                # create half-open wall
+                Wall(world=self.world, start_pos=(x+40, y), end_pos=(x+40, y+30)), # top-down(right)
+            ]
+        if tile_type == 'building_25':
+            tile_walls = [
+                # create main walls
+                Wall(world=self.world, start_pos=(x, y), end_pos=(x+90, y)), # top-right
+                Wall(world=self.world, start_pos=(x, y), end_pos=(x, y+150)), # top-down(left)
+                Wall(world=self.world, start_pos=(x+40, y+150), end_pos=(x+90, y+150)), # bot-right
+                # create half-open wall
+                Wall(world=self.world, start_pos=(x+90, y), end_pos=(x+90, y+150)), # top-down(right)
+            ]
+        if tile_type == 'building_26':
+            tile_walls = [
+                # create main walls
+                Wall(world=self.world, start_pos=(x, y), end_pos=(x+40, y)), # top-right
+                Wall(world=self.world, start_pos=(x, y), end_pos=(x, y+150)), # top-down(left)
+                Wall(world=self.world, start_pos=(x, y+150), end_pos=(x+10, y+150)), # bot-right
+                # create half-open wall
+                Wall(world=self.world, start_pos=(x+40, y), end_pos=(x+40, y+150)), # top-down(right)
+            ]
+        if tile_type == 'building_27':
+            tile_walls = [
+                # create half-open wall
+                Wall(world=self.world, start_pos=(x+30, y), end_pos=(x+100, y)), # top-right
+
+                # main walls
+                Wall(world=self.world, start_pos=(x-10, y), end_pos=(x-10, y+30)), # top-down(left)
+                Wall(world=self.world, start_pos=(x+100, y), end_pos=(x+100, y+30)), # top-down(right)
+                Wall(world=self.world, start_pos=(x-10, y+30), end_pos=(x+100, y+30)), # bot-right
+            ]
+        if tile_type == 'building_28':
+            tile_walls = [
+                # create main walls
+                Wall(world=self.world, start_pos=(x, y+10), end_pos=(x+60, y+10)), # top-right
+                Wall(world=self.world, start_pos=(x, y+10), end_pos=(x, y+90)), # top-down(left)
+                Wall(world=self.world, start_pos=(x, y+90), end_pos=(x+60, y+90)), # bot-right
+                # create half-open wall
+                Wall(world=self.world, start_pos=(x+60, y+10), end_pos=(x+60, y+30)), # top-down(right)
+                Wall(world=self.world, start_pos=(x+60, y+60), end_pos=(x+60, y+90)),# top-down(right)
+                # wall in the middle
+                Wall(world=self.world, start_pos=(x+30, y+30), end_pos=(x+30, y+60)),# top-down(right)
+            ]
+        if tile_type == 'building_29':
+            tile_walls = [
+                # create main walls
+                Wall(world=self.world, start_pos=(x-10, y), end_pos=(x+80, y)), # top-right
+                Wall(world=self.world, start_pos=(x-10, y), end_pos=(x-10, y+40)), # top-down(left)
+                Wall(world=self.world, start_pos=(x-10, y+40), end_pos=(x+30, y+40)), # bot-left (left of door)
+
+                Wall(world=self.world, start_pos=(x+80, y), end_pos=(x+80, y-20)), # top-up
+                Wall(world=self.world, start_pos=(x+80, y-20), end_pos=(x+100, y-20)), # top-up-right
+                Wall(world=self.world, start_pos=(x+100, y-20), end_pos=(x+100, y+40)), # top-up-right-down
+                Wall(world=self.world, start_pos=(x+70, y+40), end_pos=(x+100, y+40)), # right of door (bot-right)
+            ]
+        if tile_type == 'building_31':
+            tile_walls = [
+                # create main walls
+                Wall(world=self.world, start_pos=(x, y+10), end_pos=(x+20, y+10)), # top-right
+                Wall(world=self.world, start_pos=(x, y+10), end_pos=(x, y+70)), # top-down(left)
+                Wall(world=self.world, start_pos=(x, y+70), end_pos=(x+20, y+70)), # bot-right
+                # create half-open wall
+                Wall(world=self.world, start_pos=(x+20, y+10), end_pos=(x+20, y+30)), # top-down(right)
+                Wall(world=self.world, start_pos=(x+20, y+60), end_pos=(x+20, y+70)),# top-down(right)
+            ]
         return tile_walls

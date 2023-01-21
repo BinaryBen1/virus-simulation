@@ -38,7 +38,7 @@ class Person():
         # - goal_location (drawn from random distribuition, with probabilities dependend on subject)
         # -> i.e. physicists are more likely to go to the physics building
         # - age (drawn from random distribuition)
-        self.target_building = random.randint(0, 2) # [inklusive der 2. Zahl!!] do a proper random timetable here
+        self.target_building = random.randint(0, 4) # [inklusive der 2. Zahl!!]; target_building = INDEX des buildings in pf.targets
         
         # add the person to the simulation
         world.add(self.body, self.shape)
@@ -65,8 +65,8 @@ class Person():
         y_velocity = velocity_multiplier * y_velocity
         
         old_velocity = self.body.velocity
-        additive_x_noise = 5 * random.random() -2.5 # [-2.5 - 2.5]
-        additive_y_noise = 5 * random.random() -2.5 # [-2.5 - 2.5]
+        additive_x_noise = 2 * random.random() - 1 # [-1 to 1], mean: 0
+        additive_y_noise = 2 * random.random() - 1 # [-1 to 1], mean: 0
         new_x_velocity = (1-vel_update_rate) * old_velocity[0] + vel_update_rate * x_velocity + additive_x_noise
         new_y_velocity = (1-vel_update_rate) * old_velocity[1] + vel_update_rate * y_velocity + additive_y_noise
         

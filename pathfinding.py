@@ -108,7 +108,48 @@ class Pathfinder():
 
         self.world_array = self.create_world_array(sim)
 
-        self.targets = [(random.randint(0, 800), random.randint(0, 800)) for i in range(3)] # specify list of real targets here
+        # create a target point for each building
+        # self.targets = [(random.randint(0, 800), random.randint(0, 800)) for i in range(3)] # specify list of real targets here
+        self.targets = [
+            (640,510), # building 1
+            (630,460), # building 2
+            (710,560), # building 3
+            (710,450), # building 4
+            (740,385), # building 5
+            #(XXX), # building 6
+            #(XXX), # building 7
+            #(XXX), # building 8
+            #(XXX), # building 9
+            #(XXX), # building 10
+            #(XXX), # building 11
+            #(XXX), # building 12
+            #(XXX), # building 13
+            #(XXX), # building 14
+            #(XXX), # building 15
+            #(XXX), # building 16
+            #(XXX), # building 17
+            #(XXX), # building 18
+            #(XXX), # building 19
+            #(XXX), # building 20
+            #(XXX), # building 21
+            #(XXX), # building 22
+            #(XXX), # building 23
+            #(XXX), # building 24
+            #(XXX), # building 25
+            #(XXX), # building 26
+            #(XXX), # building 27
+            #(XXX), # building 28
+            #(XXX), # building 29
+            #(XXX), # building 30
+            #(XXX), # building 31
+            #(XXX), # building 32
+            #(XXX), # building 33
+            #(XXX), # building 34
+            #(XXX), # building 35
+            #(XXX), # building 36
+        ]
+
+
         n_targets = len(self.targets)
         self.heatmap_tensor = None # will be initialized in the following lines 
 
