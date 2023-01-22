@@ -1,7 +1,7 @@
 import pygame as pg
-import pymunk # simulates in C -> fast 
+import pymunk
 import numpy as np
-import skimage.measure as measure # for 2d max pooling (pip install scikit-image)
+import skimage.measure as measure
 import random
 
 # constants
@@ -14,43 +14,40 @@ RED = (252, 3, 65)
 
 class Person():
     def __init__(self, world, pathfinder, init_min, init_max, collision_radius=10):
-        # pathfinder for following the shortest path to a given goal (e.g. a building)
+
+        # pathfinder for following the shortest path to a given goal (i.e. a target building)
         self.pf = pathfinder
 
 
-        # physical particle (circle) object initialization attributes
+        # initialization attributes of a physical particle object (with a circular shape)
         self.init_min = init_min # lower bound for init position
         self.init_max = init_max # upper bound for init position
         self.collision_radius = collision_radius
         self.body = pymunk.Body(body_type=pymunk.Body.DYNAMIC)
-        
-        # initial velocity
-        self.body.velocity = random.uniform(-20, 20), random.uniform(-20, 20)
-        
         self.shape = pymunk.Circle(self.body, self.collision_radius)
         self.shape.density = 1
         self.shape.elasticity = 1
         
+        # initial velocity (will be overwritten by the path to the target building)
+        self.body.velocity = random.uniform(-20, 20), random.uniform(-20, 20)
+        
+        
         # set the initial status to susceptible (=healthy)
         self.status = "susceptible"
 
-        # set timers for incubation time and infectious time
-        # source: "Bundeszentrale für gesundheitliche Aufklärung"
-        # -> https://www.infektionsschutz.de/coronavirus/fragen-und-antworten/ansteckung-und-uebertragung/
-        
-
         # set a slight bias towards going to the library and mensa
-        # building with index 3: mensa
-        # building with index 27: library ('IKMZ')
+        # mensa:            building with index 3
+        # library ('IKMZ'): building with index 27
         self.weights = [1/35 if i not in [3,27] else 1/10 for i in range(30)]
 
         # pick a target building
-        self.target_building = np.random.choice(range(30), p=self.weights) # [inklusive der 2. Zahl!!]; target_building = INDEX des buildings in pf.targets
+        # note: we are picking the index of the building in the pf.targets list, not the number of the building
+        # (the index might differ from the buildings number)
+        self.target_building = np.random.choice(range(30), p=self.weights)
 
-        # set the init position of the particle near the target to avoid large crowds in the center at initialization
-        # (when everyone needs to get to the other side of the map, they build a huge crowd in the center and nobody gets through)
+        # set the initial position of the particle near the target to avoid large crowds in the center
+        # (when everyone needs to get to the other side of the map at once, they form a huge crowd in the center and nobody gets through)
         x_init_mean, y_init_mean = np.random.normal(loc=self.pf.targets[self.target_building])
-
         x_init = int(np.clip(np.random.normal(loc=x_init_mean, scale=50), a_min=init_min, a_max=init_max))
         y_init = int(np.clip(np.random.normal(loc=y_init_mean, scale=50), a_min=init_min, a_max=init_max))
         self.body.position = (x_init, y_init)
@@ -68,26 +65,29 @@ class Person():
     def update_velocity(self, timestep):
         # hyperparameters
         velocity_multiplier = 30
-        vel_update_rate = 0.015 # how much of the new velocity gets injected
+        vel_update_rate = 0.015 # how much of the new velocity (which follows the optimal path to the target building) gets injected
         
-        # make dependent on current velocity (self.body.velocity) and planned path
+        # get the current discrete position
         x, y = self.body.position
-                              # XXXround(x, -1) / 10
-        # x = round(x, -1) / 10 # round to nearest 10 and normalize to [0, 80]
-        # y = round(y, -1) / 10 # round to nearest 10 and normalize to [0, 80]
         discrete_position = (int(x), int(y))
+
+        # get the optimal velocity to follow the path to the target (based on the current position)
         x_velocity, y_velocity = self.pf.get_direction(discrete_position, target_building=self.target_building)
         
         # scale the velocity by the velocity multiplier
         x_velocity = velocity_multiplier * x_velocity
         y_velocity = velocity_multiplier * y_velocity
-        
-        old_velocity = self.body.velocity
+
+        # add some noise to the optimal velocity (e.g. for when it gets trapped somewhere and can't get out or to resolve running into other particles)
         additive_x_noise = 4 * random.random() - 2 # [-2 to 2], mean: 0
         additive_y_noise = 4 * random.random() - 2 # [-2 to 2], mean: 0
+        
+        # calculate the new velocity
+        old_velocity = self.body.velocity
         new_x_velocity = (1-vel_update_rate) * old_velocity[0] + vel_update_rate * x_velocity + additive_x_noise
         new_y_velocity = (1-vel_update_rate) * old_velocity[1] + vel_update_rate * y_velocity + additive_y_noise
         
+        # update the velocity
         self.body.velocity = (new_x_velocity, new_y_velocity)
     
     def draw(self, screen):
@@ -105,10 +105,10 @@ class Person():
 
     def update_target(self, timestep):
         if (timestep % self.time_until_next_target) > 0 and (timestep % self.time_until_next_target) < 50:
-            # set a new random target
+            # set a new random target building
             self.target_building = np.random.choice(range(30), p=self.weights)
 
-            # set for how many timesteps the person will persue the new target
+            # set for how many timesteps the person will persue the new target building
             self.time_until_next_target = np.random.randint(9_000, 72_000)
 
     def update_infection_status(self, avg_incubation_time, avg_infectious_time, timestep):
@@ -147,18 +147,19 @@ class Wall():
         This allows the the pathfinding setup for people to be easier.
         Walls also cannot be just a dot (both x-values and both y-values are the same).
         """
-        # ensure that wall is not a dot
+        # ensures that wall is not a dot
         if (start_pos[0] == end_pos[0]) and (start_pos[1] == end_pos[1]):
             raise Exception("Value Error: Wall cannot be a dot (make it longer along one dimension).")
         
-        # ensure that the wall is symmetrical to either the x-axis or the y-axis   
+        # ensures that the wall is symmetrical to either the x-axis or the y-axis   
         if (start_pos[0] != end_pos[0]) and (start_pos[1] != end_pos[1]):
             raise Exception("Value Error: Wall's position values should match along one dimension.")
         
-        # ensure that the thickness is an odd number so that it can be drawn appropriately
+        # ensures that the thickness is an odd number so that it can be drawn appropriately
         if thickness % 2 == 0: # thickness is even
             raise Exception("Value Error: Wall's thickness should be an odd number.")
         
+        # set all the wall's attributes and add the wall object to the world
         self.start_pos = start_pos
         self.end_pos = end_pos
         self.thickness = thickness

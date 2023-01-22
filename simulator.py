@@ -1,7 +1,7 @@
 import pygame as pg
-import pymunk # simulates in C -> fast 
+import pymunk
 import numpy as np
-import skimage.measure as measure # for 2d max pooling (pip install scikit-image)
+import skimage.measure as measure
 import random
 
 from objects import Person, Wall, Train
@@ -16,17 +16,18 @@ RED = (252, 3, 65)
 
 class CovidSim():
     def __init__(self, n_people, infection_prob=0.3, avg_incubation_time=5_000, avg_infectious_time=10_000, debug_mode=False, FPS=60):
-        # sim setup
+        
+        # simulator setup
         self.n_people = n_people
-        self.status_counts = [] # will be filled with 3-tuples of counts of how many people are healthy/infected/recovered at runtime
-        self.pf = None # will be set later
+        self.status_counts = [] # will be filled with 4-tuples of counts for every status (susceptible/infected/infectious/removed)
+        self.pf = None # will be set later because the pathfinder needs attributes from the sim for initialization
 
-        # visuals setup
+        # screen setup
         self.screen_size = 800
         self.width, self.height = (self.screen_size, self.screen_size)
         self.FPS = FPS
         
-        # some useful attributes
+        # useful simulator attributes
         self.draw_dots = debug_mode
         self.draw_walls = debug_mode
         self.speedup_factor = 1
@@ -45,6 +46,7 @@ class CovidSim():
     
 
     def create_world(self):
+
         # create the simulated world
         self.world = pymunk.Space()
         
@@ -58,7 +60,7 @@ class CovidSim():
             Wall(world=self.world, start_pos=(0, 800), end_pos=(110, 800), thickness=1), # bot-right
             Wall(world=self.world, start_pos=(130, 800), end_pos=(800, 800), thickness=1)] # bot-right
         
-        # create walls for buildings
+        # create the buildings
         self.buildings = [
             self._create_tile(origin_pos=(630,490), tile_type='building_1'),
             self._create_tile(origin_pos=(620,440), tile_type='building_2'),
@@ -78,23 +80,20 @@ class CovidSim():
             self._create_tile(origin_pos=(280,600), tile_type='building_15'),
             self._create_tile(origin_pos=(280,560), tile_type='building_16'),
             self._create_tile(origin_pos=(280,520), tile_type='building_17'),
-            #self._create_tile(origin_pos=(XXX), tile_type='building_18'),
             self._create_tile(origin_pos=(450,700), tile_type='building_19'),
             self._create_tile(origin_pos=(570,680), tile_type='building_20'),
             self._create_tile(origin_pos=(630,600), tile_type='BUD'),
             self._create_tile(origin_pos=(230,430), tile_type='IKMZ'),
-            #self._create_tile(origin_pos=(XXX), tile_type='building_23'),
             self._create_tile(origin_pos=(490,620), tile_type='building_24'),
             self._create_tile(origin_pos=(260,100), tile_type='building_25'),
             self._create_tile(origin_pos=(390,100), tile_type='building_26'),
             self._create_tile(origin_pos=(350,290), tile_type='building_27'),
             self._create_tile(origin_pos=(250,280), tile_type='building_28'),
             self._create_tile(origin_pos=(350,340), tile_type='building_29'),
-            #self._create_tile(origin_pos=(XXX), tile_type='building_30'),
             self._create_tile(origin_pos=(440,550), tile_type='building_31'),
             self._create_tile(origin_pos=(520,680), tile_type='building_35'),
 
-            # this building is not visitable (because it doesn't have a number on the map)
+            # building 36 is not a target building (because it doesn't have a number on the map)
             self._create_tile(origin_pos=(440,410), tile_type='building_36'),
         ]
 
@@ -119,9 +118,10 @@ class CovidSim():
         if involves_infected_person:
             for shape in arbiter.shapes:
                 if shape.density == 1.0: # (1.0 is the key for susceptible)
-                    # infection_prob: probability that infection status is shared when colliding
+                    # "infection_prob" is the probability that infection status is shared when colliding
                     if random.random() < self.infection_prob:
-                        # set the density to 0.9 to signal that the person is now infected (infection status will be set in the next timestep)
+                        # set the density to 0.9 to signal that the person is now infected 
+                        # -> the infection status will be set in the next timestep automatically
                         shape.density = 0.9
         return True
 
@@ -144,17 +144,18 @@ class CovidSim():
         return susceptible_count, infected_count, infectious_count, removed_count
     
     def run(self, seed=42, speedup_factor=1, max_timestep=3000, return_data=False):
-        # setup
+        
+        # setup the new run
         random.seed(seed)
         self.running = True
         self.speedup_factor = speedup_factor
-        self.status_counts = [] # reset status counts
+        self.status_counts = [] # reset all status counts
 
         # create the pygame-screen
         self.screen = pg.display.set_mode((self.screen_size, self.screen_size))
         self.clock = pg.time.Clock()
 
-        # add logo and caption
+        # add the logo and caption for the window
         logo = pg.image.load('images/virus_logo.png')
         pg.display.set_icon(logo)
         pg.display.set_caption('COVID19-Sim')
@@ -170,11 +171,9 @@ class CovidSim():
                               collision_radius=2)
                        for i in range(self.n_people)]
     
-        # define custom collision handler (collision might spread infection status)        
+        # define custom collision handler that handles infection spreading      
         self.handler = self.world.add_default_collision_handler()
-        self.handler.begin = self.collision_begin   # each time two objects collide
-                                                    # the custom collision_begin method is called
-                                                    # for spreading the infection status 
+        self.handler.begin = self.collision_begin   # each time two objects collide the custom collision_begin method is called for handling infection spread
         
         # infect 3 random persons to start the epidemic
         for _ in range(3):
@@ -192,36 +191,37 @@ class CovidSim():
             self.world.step(self.speedup_factor/self.FPS) # keeps rendered steps/s consistent (independent of self.FPS)
             timestep += 1
             
-            # handle mouse and keyboard events
+            # handle mouse and keyboard events (e.g. closing the window)
             self.events()
             
-            # update the velocity of all people to navigate to their goal
+            # update the velocity of all people according to their goal-path
             for person in self.people:
                 person.update_velocity(pg.time.get_ticks())
             
-            # update the train state and infections
+            # update the trains state and the infection-status updates for all people
             self.update()
             
             # render the map and all simulated objects
             if self.running:
                 self.draw()
                             
-            # save counts of how many people are healthy/infected/recovered
+            # save status counts for all people
             susceptible_count, infected_count, infectious_count, removed_count = self.get_status_counts()
             self.status_counts.append((susceptible_count, infected_count, infectious_count, removed_count))
 
-            # check if maximum simulation time is reached
+            # stop the simulation if the maximum given simulation time is reached
             if timestep >= max_timestep:
                 break
             
         pg.quit()
 
-        # return collected data
+        # return the collected data
         if return_data:
             susceptible_counts = [status_tuple[0] for status_tuple in self.status_counts]
             infected_counts = [status_tuple[1] for status_tuple in self.status_counts]
             infectious_counts = [status_tuple[2] for status_tuple in self.status_counts]
             removed_counts = [status_tuple[3] for status_tuple in self.status_counts]
+
             return susceptible_counts, infected_counts, infectious_counts, removed_counts
 
     
@@ -241,19 +241,15 @@ class CovidSim():
                     self.running = False
     
     def update(self):
-        # update train's state
+
+        # update the train's state
         self.train.update_state(world=self.world, timestep=pg.time.get_ticks())
 
-        # update targets
+        # update the targets for all people (which building they want to visit)
         for person in self.people:
             person.update_target(timestep=pg.time.get_ticks())
         
-        # update infections
-        #for person in self.people:
-        #    if person.shape.density == 0.9:
-        #        person.status = "infected"
-
-        # update status
+        # update the infection status for all people
         for person in self.people:
             person.update_infection_status(
                 self.avg_incubation_time,
@@ -262,25 +258,26 @@ class CovidSim():
 
     
     def draw(self):
-        # draw the golm-background image
+
+        # draw the background image of Golm
         golm_img = pg.image.load('images/golm_test.png')
         golm_img = pg.transform.scale(golm_img, (self.screen_size, self.screen_size))
         self.screen.blit(golm_img, (0, 0))
         
-        # draw train
+        # draw the train
         self.train.draw(self.screen)
         
-        # draw people
+        # draw all people
         for person in self.people:
             person.draw(self.screen)
         
-        # draw buildings
+        # draw the buildings
         if self.draw_walls:
             for building in self.buildings:
                 for wall in building:
                     wall.draw(self.screen)
         
-        # draw grid of dots for testing/debugging
+        # draw a grid of dots for testing & debugging
         if self.draw_dots:
             for i in range(80):
                 for j in range(80):
@@ -289,14 +286,14 @@ class CovidSim():
                     else:
                         pg.draw.circle(self.screen, LIGHT_GREY, (i*10, j*10), 2) 
         
-        # update entire screen
+        # update the entire screen
         pg.display.flip() 
     
     
     def _create_tile(self, origin_pos, tile_type):
         """
-        Takes the origin (top right) position and type of a building as input and
-        returns a list of it's walls as static physical objects.
+        Takes the origin (usually top-left) position and type of a building as input and
+        returns a list of it's walls as static objects.
         """
         x, y = origin_pos
         

@@ -1,7 +1,7 @@
 import pygame as pg
-import pymunk # simulates in C -> fast 
+import pymunk
 import numpy as np
-import skimage.measure as measure # for 2d max pooling (pip install scikit-image)
+import skimage.measure as measure
 import random
 import os
 
@@ -18,7 +18,7 @@ class Node():
         neighbors = []
         for x_delta in [-1, 0, 1]:
             for y_delta in [-1, 0, 1]:                    
-                # calculate the neighbor-node's coordinates
+                # calculate the coordinates of a neighboring node 
                 neighbor_x = self.x + x_delta
                 neighbor_y = self.y + y_delta
                 
@@ -28,24 +28,23 @@ class Node():
                 
                 # disregard if the neighbor node is a wall
                 if world_array[neighbor_x, neighbor_y] == 1:
-                    # print(f'{(neighbor_x, neighbor_y)} is a wall')
                     continue
                 
-                # exclude the origin node (self) from neighbors
+                # exclude the origin node (self) from the neighbors
                 if x_delta == 0 and y_delta == 0:
                     continue
                     
-                # check that the neighbor is in bounds
-                if neighbor_x < 0 or neighbor_x > 799: # XXX (was: >79 /199/ 799)
+                # check that the neighbor is in the bounds of the world array
+                if neighbor_x < 0 or neighbor_x > 799:
                     continue
-                if neighbor_y < 0 or neighbor_y > 799: # XXX
+                if neighbor_y < 0 or neighbor_y > 799:
                     continue
                 
-                # append valid neighbor
+                # append the valid neighbor to the neighbors list
                 neighbor = Node(coordinates=(neighbor_x, neighbor_y))
                 neighbors.append(neighbor)
         
-        # return all neighbors as a list of nodes
+        # return a list of all neighbor nodes
         return neighbors
     
     def distance_to_neighbor(self, neighbor):
@@ -82,23 +81,24 @@ class Node():
 class Queue():
 
     def __init__(self, start_node):
+        # start the search from the start_node
         self.queue = [start_node]
         self.enqueued_coordinates = {start_node.coordinates()}
         
     def add_node(self, node) -> None:
-        # insert node as first element if the node is not already in enqueued
+        # insert a node as first element if the node is not already enqueued
         if node.coordinates() not in self.enqueued_coordinates:
             self.queue = [node] + self.queue
             self.enqueued_coordinates.add(node.coordinates())
     
     def remove_node(self) -> Node:
-        # remove node from the set of enqueued nodes and return last node
+        # remove a node from the set of enqueued nodes and return last node
         node = self.queue.pop()
         self.enqueued_coordinates.remove(node.coordinates())
         return node
     
     def has_elements(self) -> bool:
-        # return True if the Queue has elements and False otherwise
+        """ returns True if the Queue has elements and False otherwise """
         return bool(self.queue)
 
 
@@ -106,11 +106,11 @@ class Pathfinder():
     
     def __init__(self, sim, use_precomputed_heatmaps):        
 
+        # create the world as a 2d-array
         self.world_array = self.create_world_array(sim)
 
         # create a target point for each building
-        # self.targets = [(random.randint(0, 800), random.randint(0, 800)) for i in range(3)] # specify list of real targets here
-        self.targets = [
+        self.targets = [ # index: building_name
             (640,510), # 0: building 1
             (630,460), # 1: building 2
             (710,560), # 2: building 3
@@ -141,13 +141,16 @@ class Pathfinder():
             (280,470), # 27: building IKMZ
             (450,600), # 28: building 31
             (540,700), # 29: building 35
-        ] # => 30 buildings
+        ] 
 
-
+        # we have 30 target buildings to pick from
         n_targets = len(self.targets)
+
+
         self.heatmap_tensor = None # will be initialized in the following lines 
 
         if use_precomputed_heatmaps:
+            # load the precomputed heatmap tensor
             self.load_heatmap_tensor()
 
         else:
@@ -165,27 +168,32 @@ class Pathfinder():
                 self.heatmap_tensor[i] = self.create_heatmap(target_node)
             self.save_heatmap_tensor()
 
-        # add the instanciated pathfinder to the given simulator
+        # add the pathfinder instance to the given simulator
         sim.pf = self
     
 
     def save_heatmap_tensor(self):
+
+        # create the heatmaps directory if it doesn't exist yet
         if not os.path.exists("heatmaps"):
             os.mkdir("heatmaps")
     
+        # save the given heatmap tensor as a numpy file
         np.save("heatmaps/heatmap_tensor.npy", self.heatmap_tensor)
         print("saved heatmap_tensor with shape", self.heatmap_tensor.shape)
 
     
     def load_heatmap_tensor(self):
+
+        # load a precomputed heatmap tensor
         self.heatmap_tensor = np.load("heatmaps/heatmap_tensor.npy")
         print("using precomputed heatmaps with shape", self.heatmap_tensor.shape)
 
 
     def create_world_array(self, sim):
-        # model the world as an array of 0s and 1s for pathfinding
-        # 0 means you can go there
-        # 1 means there is a wall
+        # model the world as an array of booleans (=bitmap) for pathfinding
+        # 0 means a person can go to this cell
+        # 1 means that this cell is part of a wall (it's not passable)
         world_array = np.zeros((800, 800), dtype=int)
 
         # add walls (change pixels that belong to a wall to '1') 
@@ -200,9 +208,9 @@ class Pathfinder():
         world_array[:,   0] = 1
         world_array[:, 799] = 1
 
-        # reduce the number of pixels to make pathfinding practical
-        # new shape: (80, 80)
-        world_array = measure.block_reduce(world_array, (1, 1), np.max) # XXX was: 4, 4
+        # the following lines can reduce the map size to make pathfinding practical if the map is too large otherwise
+        # to do so, you can change the filter from (1,1) to e.g. (4,4) => this would result in a 200x200 map
+        world_array = measure.block_reduce(world_array, (1, 1), np.max) # by setting the filter to (1,1), we are using the original map size of 800x800
         print('world_array shape:', world_array.shape)
         return world_array
         
@@ -216,12 +224,10 @@ class Pathfinder():
         self.visited = dict() # dict that maps coordinates to the corresponding node
         
         while queue.has_elements():
-            # print(f'queue #nodes: {len(queue.queue)}')
-            # print(f'visited #nodes: {len(self.visited.keys())}')
             current_node = queue.remove_node()
             self.expand_heatmap(queue, current_node)
         
-        heatmap = np.zeros((800, 800), dtype=int) # XXX evtl. int wegnehmen, war 200x200
+        heatmap = np.zeros((800, 800), dtype=int)
         for coordinates, node in self.visited.items():
             heatmap[coordinates] = node.distance
             
@@ -229,7 +235,6 @@ class Pathfinder():
     
     
     def expand_heatmap(self, queue, current_node):
-        # print(f'current: {current_node.coordinates()}')
         
         # set the current node to visited
         self.visited[current_node.coordinates()] = current_node
@@ -274,14 +279,15 @@ class Pathfinder():
         best_neighbor = None
         best_distance = np.inf
         for neighbor in neighbors:
-            # print(neighbor.coordinates(), heatmap[neighbor.coordinates()])
+
             neighbor_distance = self.heatmap_tensor[target_building][neighbor.coordinates()]
             
             if neighbor_distance < best_distance:
                 best_neighbor = neighbor
                 best_distance = neighbor_distance
         
-        # if no best neighbor was found (edgecase), return a random direction
+        # if no best neighbor was found, return a random direction
+        # (this shouldn't happen and is just a protection against weird edgecases)
         if best_neighbor is None:
             return (np.random.choice([-1,0,1]), np.random.choice([-1,0,1]))
         
