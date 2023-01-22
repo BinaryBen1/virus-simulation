@@ -32,11 +32,12 @@ class Person():
         
         # setup attributes
         self.infected = False
-        # TODO:
-        # - subject
-        # - goal_location (drawn from random distribuition, with probabilities dependend on subject)
-        # -> i.e. physicists are more likely to go to the physics building
-        # - age (drawn from random distribuition)
+
+        # set timers for incubation time and infectious time
+        # source: "Bundeszentrale für gesundheitliche Aufklärung"
+        # -> https://www.infektionsschutz.de/coronavirus/fragen-und-antworten/ansteckung-und-uebertragung/
+
+
 
         # set a slight bias towards going to the library and mensa
         # building with index 3: mensa
@@ -55,7 +56,7 @@ class Person():
         self.body.position = (x_init, y_init)
 
         # set a random time until this person picks its next target
-        self.time_until_next_target = np.random.randint(9_000, 36_000)
+        self.time_until_next_target = np.random.randint(9_000, 72_000)
         
         # add the person to the simulation
         world.add(self.body, self.shape)
@@ -101,7 +102,7 @@ class Person():
             self.target_building = np.random.choice(range(30), p=self.weights)
 
             # set for how many timesteps the person will persue the new target
-            self.time_until_next_target = np.random.randint(9_000, 36_000)
+            self.time_until_next_target = np.random.randint(9_000, 72_000)
 
 
 class Wall():
