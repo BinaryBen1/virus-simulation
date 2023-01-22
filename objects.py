@@ -9,6 +9,7 @@ WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 BLUE = (3, 186, 252)
 LIGHT_GREY = (70, 84, 105)
+YELLOW = (245, 203, 66)
 RED = (252, 3, 65)
 
 class Person():
@@ -24,20 +25,19 @@ class Person():
         self.body = pymunk.Body(body_type=pymunk.Body.DYNAMIC)
         
         # initial velocity
-        self.body.velocity = random.uniform(-100, 100), random.uniform(-100, 100)
+        self.body.velocity = random.uniform(-20, 20), random.uniform(-20, 20)
         
         self.shape = pymunk.Circle(self.body, self.collision_radius)
         self.shape.density = 1
         self.shape.elasticity = 1
         
-        # setup attributes
-        self.infected = False
+        # set the initial status to susceptible (=healthy)
+        self.status = "susceptible"
 
         # set timers for incubation time and infectious time
         # source: "Bundeszentrale für gesundheitliche Aufklärung"
         # -> https://www.infektionsschutz.de/coronavirus/fragen-und-antworten/ansteckung-und-uebertragung/
-
-
+        
 
         # set a slight bias towards going to the library and mensa
         # building with index 3: mensa
@@ -61,9 +61,9 @@ class Person():
         # add the person to the simulation
         world.add(self.body, self.shape)
     
-    def infect(self, n_people):
+    def infect(self):
         self.shape.density = 0.9
-        self.infected = True
+        self.status = "infected"
         
     def update_velocity(self, timestep):
         # hyperparameters
@@ -93,7 +93,14 @@ class Person():
     def draw(self, screen):
         x, y = self.body.position
         discrete_position = (int(x), int(y))
-        color = RED if self.infected else BLUE
+        if self.status == "infected":
+            color = YELLOW
+        elif self.status == "infectious":
+            color = RED
+        elif self.status == "removed":
+            color = LIGHT_GREY
+        else:
+            color = BLUE
         pg.draw.circle(screen, color, discrete_position, self.collision_radius)
 
     def update_target(self, timestep):
@@ -103,6 +110,32 @@ class Person():
 
             # set for how many timesteps the person will persue the new target
             self.time_until_next_target = np.random.randint(9_000, 72_000)
+
+    def update_infection_status(self, avg_incubation_time, avg_infectious_time, timestep):
+
+        incubation_rate = 1/avg_incubation_time # probability that the status switches from infected to infectious (sampled each timestep)
+        removed_rate = 1/avg_infectious_time # probability that the status switches from infectious to removed (sampled each timestep)
+
+        # status updates if the person is currently infected
+        if self.shape.density == 0.9:
+
+            # assure that the status is infected
+            self.status = "infected"
+
+            # change the status to infectious with a probability of incubation_rate
+            if np.random.random() <= incubation_rate:
+                self.status = "infectious"
+                self.shape.density = 0.8
+
+        # status updates if the person is currently infectious
+        elif self.shape.density == 0.8:
+            
+            # change the status to removed with a probability of removed_rate
+            if np.random.random() <= removed_rate:
+                self.status = "removed"
+                self.shape.density = 0.7
+
+
 
 
 class Wall():

@@ -11,10 +11,11 @@ WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 BLUE = (3, 186, 252)
 LIGHT_GREY = (70, 84, 105)
+YELLOW = (245, 203, 66)
 RED = (252, 3, 65)
 
 class CovidSim():
-    def __init__(self, n_people, infection_prob, debug_mode=False, FPS=60):
+    def __init__(self, n_people, infection_prob=0.3, avg_incubation_time=5_000, avg_infectious_time=10_000, debug_mode=False, FPS=60):
         # sim setup
         self.n_people = n_people
         self.status_counts = [] # will be filled with 3-tuples of counts of how many people are healthy/infected/recovered at runtime
@@ -33,6 +34,8 @@ class CovidSim():
         
         # hyperparameters
         self.infection_prob = infection_prob
+        self.avg_incubation_time = avg_incubation_time
+        self.avg_infectious_time = avg_infectious_time
 
         # setup screen_borders, buildings
         self.world = None
@@ -109,29 +112,36 @@ class CovidSim():
             if shape.__class__ == pymunk.shapes.Segment:
                 return True
             
-            # check if a person is infected
-            if shape.density == 0.9:
+            # check if a person is infectious
+            if shape.density == 0.8: # (0.8 is the key for infectious)
                 involves_infected_person = True
         
         if involves_infected_person:
             for shape in arbiter.shapes:
-                if shape.density == 1.0: # 1.0 means not infected
+                if shape.density == 1.0: # (1.0 is the key for susceptible)
                     # infection_prob: probability that infection status is shared when colliding
                     if random.random() < self.infection_prob:
+                        # set the density to 0.9 to signal that the person is now infected (infection status will be set in the next timestep)
                         shape.density = 0.9
         return True
 
     def get_status_counts(self):
-        status_list = ["infected" if person.infected else "healthy" for person in self.people]
-        healthy_count = 0
+        status_list = [person.status for person in self.people]
+        susceptible_count = 0
         infected_count = 0
+        infectious_count = 0
+        removed_count = 0
 
         for status in status_list:
-            if status == "healthy":
-                healthy_count += 1
+            if status == "susceptible":
+                susceptible_count += 1
             elif status == "infected":
                 infected_count += 1
-        return healthy_count, infected_count
+            elif status == "infectious":
+                infectious_count += 1
+            else:
+                removed_count += 1
+        return susceptible_count, infected_count, infectious_count, removed_count
     
     def run(self, seed=42, speedup_factor=1, max_timestep=3000, return_data=False):
         # setup
@@ -166,8 +176,9 @@ class CovidSim():
                                                     # the custom collision_begin method is called
                                                     # for spreading the infection status 
         
-        # infect one random person to start the epidemic
-        random.choice(self.people).infect(self.n_people)
+        # infect 3 random persons to start the epidemic
+        for _ in range(3):
+            random.choice(self.people).infect()
         
         # add a train to the simulation
         self.train = Train(world=self.world,
@@ -196,8 +207,8 @@ class CovidSim():
                 self.draw()
                             
             # save counts of how many people are healthy/infected/recovered
-            healthy_count, infected_count = self.get_status_counts()
-            self.status_counts.append((healthy_count, infected_count))
+            susceptible_count, infected_count, infectious_count, removed_count = self.get_status_counts()
+            self.status_counts.append((susceptible_count, infected_count, infectious_count, removed_count))
 
             # check if maximum simulation time is reached
             if timestep >= max_timestep:
@@ -205,11 +216,13 @@ class CovidSim():
             
         pg.quit()
 
-        # return collected data (healthy/infected/recovered counts)
+        # return collected data
         if return_data:
-            healthy_counts = [status_tuple[0] for status_tuple in self.status_counts]
+            susceptible_counts = [status_tuple[0] for status_tuple in self.status_counts]
             infected_counts = [status_tuple[1] for status_tuple in self.status_counts]
-            return healthy_counts, infected_counts
+            infectious_counts = [status_tuple[2] for status_tuple in self.status_counts]
+            removed_counts = [status_tuple[3] for status_tuple in self.status_counts]
+            return susceptible_counts, infected_counts, infectious_counts, removed_counts
 
     
     def events(self):
@@ -236,9 +249,17 @@ class CovidSim():
             person.update_target(timestep=pg.time.get_ticks())
         
         # update infections
+        #for person in self.people:
+        #    if person.shape.density == 0.9:
+        #        person.status = "infected"
+
+        # update status
         for person in self.people:
-            if person.shape.density == 0.9:
-                person.infected = True
+            person.update_infection_status(
+                self.avg_incubation_time,
+                self.avg_infectious_time,
+                timestep=pg.time.get_ticks())
+
     
     def draw(self):
         # draw the golm-background image
