@@ -111,43 +111,37 @@ class Pathfinder():
         # create a target point for each building
         # self.targets = [(random.randint(0, 800), random.randint(0, 800)) for i in range(3)] # specify list of real targets here
         self.targets = [
-            (640,510), # building 1
-            (630,460), # building 2
-            (710,560), # building 3
-            (710,450), # building 4
-            (740,385), # building 5
-            #(XXX), # building 6
-            #(XXX), # building 7
-            #(XXX), # building 8
-            #(XXX), # building 9
-            #(XXX), # building 10
-            #(XXX), # building 11
-            #(XXX), # building 12
-            #(XXX), # building 13
-            #(XXX), # building 14
-            #(XXX), # building 15
-            #(XXX), # building 16
-            #(XXX), # building 17
-            #(XXX), # building 18
-            #(XXX), # building 19
-            #(XXX), # building 20
-            #(XXX), # building 21
-            #(XXX), # building 22
-            #(XXX), # building 23
-            #(XXX), # building 24
-            #(XXX), # building 25
-            #(XXX), # building 26
-            #(XXX), # building 27
-            #(XXX), # building 28
-            #(XXX), # building 29
-            #(XXX), # building 30
-            #(XXX), # building 31
-            #(XXX), # building 32
-            #(XXX), # building 33
-            #(XXX), # building 34
-            #(XXX), # building 35
-            #(XXX), # building 36
-        ]
+            (640,510), # 0: building 1
+            (630,460), # 1: building 2
+            (710,560), # 2: building 3
+            (710,450), # 3: building 4
+            (740,385), # 4: building 5
+            (650,320), # 5: building 6
+            (640,380), # 6: building 7
+            (560,340), # 7: building 8
+            (580,440), # 8: building 9
+            (570,500), # 9: building 10
+            (540,570), # 10: building 11
+            (770,310), # 11: building 12
+            (730,540), # 12: building 13
+            (350,560), # 13: building 14
+            (380,540), # 14: building 14a
+            (310,610), # 15: building 15
+            (310,570), # 16: building 16
+            (310,530), # 17: building 17
+            (470,730), # 18: building 19
+            (590,700), # 19: building 20
+            (560,630), # 20: building 24
+            (320,150), # 21: building 25
+            (410,130), # 22: building 26
+            (400,300), # 23: building 27
+            (260,320), # 24: building 28
+            (370,360), # 25: building 29
+            (650,630), # 26: building BUD
+            (280,470), # 27: building IKMZ
+            (450,600), # 28: building 31
+            (540,700), # 29: building 35
+        ] # => 30 buildings
 
 
         n_targets = len(self.targets)

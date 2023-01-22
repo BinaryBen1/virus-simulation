@@ -14,7 +14,7 @@ LIGHT_GREY = (70, 84, 105)
 RED = (252, 3, 65)
 
 class CovidSim():
-    def __init__(self, n_people, infection_prob, draw_dots_for_debugging, FPS=60):
+    def __init__(self, n_people, infection_prob, debug_mode=False, FPS=60):
         # sim setup
         self.n_people = n_people
         self.status_counts = [] # will be filled with 3-tuples of counts of how many people are healthy/infected/recovered at runtime
@@ -26,7 +26,8 @@ class CovidSim():
         self.FPS = FPS
         
         # some useful attributes
-        self.draw_dots = draw_dots_for_debugging
+        self.draw_dots = debug_mode
+        self.draw_walls = debug_mode
         self.speedup_factor = 1
         self.running = True
         
@@ -89,20 +90,14 @@ class CovidSim():
             #self._create_tile(origin_pos=(XXX), tile_type='building_30'),
             self._create_tile(origin_pos=(440,550), tile_type='building_31'),
             self._create_tile(origin_pos=(520,680), tile_type='building_35'),
+
+            # this building is not visitable (because it doesn't have a number on the map)
+            self._create_tile(origin_pos=(440,410), tile_type='building_36'),
         ]
 
     def collision_begin(self, arbiter, space, data):
         """ 
-        This custom pre-collision-handling method handles infection spreading        if tile_type == 'building_7':
-            tile_walls = [
-                # create main walls
-                Wall(world=self.world, start_pos=(x, y+10), end_pos=(x+20, y+10)), # top-right
-                Wall(world=self.world, start_pos=(x, y+10), end_pos=(x, y+70)), # top-down(left)
-                Wall(world=self.world, start_pos=(x, y+70), end_pos=(x+20, y+70)), # bot-right
-                # create half-open wall
-                Wall(world=self.world, start_pos=(x+20, y+10), end_pos=(x+20, y+30)), # top-down(right)
-                Wall(world=self.world, start_pos=(x+20, y+60), end_pos=(x+20, y+70)),# top-down(right)
-            ] 
+        This custom pre-collision-handling method handles infection spreading
         when two persons collide.
         It also has to return True so the default PyMunk collision handler can handle 
         changes of physical attributes afterwards (e.g. updating the velocity).
@@ -160,9 +155,9 @@ class CovidSim():
         # add people to the simulation
         self.people = [Person(world=self.world,
                               pathfinder=self.pf,
-                              x_init=random.randint(0, self.screen_size),
-                              y_init=random.randint(0, self.screen_size),
-                              collision_radius=4,)
+                              init_min=0,
+                              init_max=self.screen_size,
+                              collision_radius=2)
                        for i in range(self.n_people)]
     
         # define custom collision handler (collision might spread infection status)        
@@ -198,7 +193,7 @@ class CovidSim():
             
             # render the map and all simulated objects
             if self.running:
-                self.draw(self.draw_dots)
+                self.draw()
                             
             # save counts of how many people are healthy/infected/recovered
             healthy_count, infected_count = self.get_status_counts()
@@ -235,13 +230,17 @@ class CovidSim():
     def update(self):
         # update train's state
         self.train.update_state(world=self.world, timestep=pg.time.get_ticks())
+
+        # update targets
+        for person in self.people:
+            person.update_target(timestep=pg.time.get_ticks())
         
         # update infections
         for person in self.people:
             if person.shape.density == 0.9:
                 person.infected = True
     
-    def draw(self, draw_dots):
+    def draw(self):
         # draw the golm-background image
         golm_img = pg.image.load('images/golm_test.png')
         golm_img = pg.transform.scale(golm_img, (self.screen_size, self.screen_size))
@@ -255,12 +254,13 @@ class CovidSim():
             person.draw(self.screen)
         
         # draw buildings
-        for building in self.buildings:
-            for wall in building:
-                wall.draw(self.screen)
+        if self.draw_walls:
+            for building in self.buildings:
+                for wall in building:
+                    wall.draw(self.screen)
         
         # draw grid of dots for testing/debugging
-        if draw_dots:
+        if self.draw_dots:
             for i in range(80):
                 for j in range(80):
                     if i%10 == 0 and j%10 == 0:
@@ -302,11 +302,9 @@ class CovidSim():
         if tile_type == 'building_2':
             tile_walls = [
                 # create main walls
-                Wall(world=self.world, start_pos=(x, y), end_pos=(x+30, y)), # top-right
+                Wall(world=self.world, start_pos=(x, y), end_pos=(x+20, y)), # top-right
                 Wall(world=self.world, start_pos=(x, y), end_pos=(x, y+30)), # top-down(left)
                 Wall(world=self.world, start_pos=(x, y+30), end_pos=(x+30, y+30)), # bot-right
-                # create half-open wall
-                Wall(world=self.world, start_pos=(x+30, y+20), end_pos=(x+30, y+30)), # top-down(right)
             ]
         if tile_type == 'building_3':
             tile_walls = [
@@ -366,21 +364,21 @@ class CovidSim():
                 # create main walls
                 Wall(world=self.world, start_pos=(x, y), end_pos=(x+60, y)), # top-right
                 Wall(world=self.world, start_pos=(x, y), end_pos=(x, y+30)), # top-down(left)
-                Wall(world=self.world, start_pos=(x, y+30), end_pos=(x+30, y+30)), # bot-left (left of door)
+                Wall(world=self.world, start_pos=(x, y+30), end_pos=(x+20, y+30)), # bot-left (left of door)
 
                 Wall(world=self.world, start_pos=(x+60, y), end_pos=(x+60, y-50)), # top-up
                 Wall(world=self.world, start_pos=(x+60, y-50), end_pos=(x+90, y-50)), # top-up-right
                 Wall(world=self.world, start_pos=(x+90, y-50), end_pos=(x+90, y+30)), # top-up-right-down
-                Wall(world=self.world, start_pos=(x+60, y+30), end_pos=(x+90, y+30)), # right of door (bot-right)
+                Wall(world=self.world, start_pos=(x+70, y+30), end_pos=(x+90, y+30)), # right of door (bot-right)
             ]
         if tile_type == 'building_9':
             tile_walls = [
                 # create main walls
-                Wall(world=self.world, start_pos=(x, y+10), end_pos=(x+20, y+10)), # top-right
-                Wall(world=self.world, start_pos=(x, y+10), end_pos=(x, y+70)), # top-down(left)
+                Wall(world=self.world, start_pos=(x, y+20), end_pos=(x+20, y+20)), # top-right
+                Wall(world=self.world, start_pos=(x, y+20), end_pos=(x, y+70)), # top-down(left)
                 Wall(world=self.world, start_pos=(x, y+70), end_pos=(x+20, y+70)), # bot-right
                 # create half-open wall
-                Wall(world=self.world, start_pos=(x+20, y+10), end_pos=(x+20, y+30)), # top-down(right)
+                Wall(world=self.world, start_pos=(x+20, y+20), end_pos=(x+20, y+30)), # top-down(right)
                 Wall(world=self.world, start_pos=(x+20, y+60), end_pos=(x+20, y+70)),# top-down(right)
             ]
         if tile_type == 'building_10':
@@ -572,13 +570,13 @@ class CovidSim():
             tile_walls = [
                 # create main walls
                 Wall(world=self.world, start_pos=(x-10, y), end_pos=(x+80, y)), # top-right
-                Wall(world=self.world, start_pos=(x-10, y), end_pos=(x-10, y+40)), # top-down(left)
-                Wall(world=self.world, start_pos=(x-10, y+40), end_pos=(x+30, y+40)), # bot-left (left of door)
+                Wall(world=self.world, start_pos=(x-10, y), end_pos=(x-10, y+30)), # top-down(left)
+                Wall(world=self.world, start_pos=(x-10, y+30), end_pos=(x+30, y+30)), # bot-left (left of door)
 
                 Wall(world=self.world, start_pos=(x+80, y), end_pos=(x+80, y-20)), # top-up
                 Wall(world=self.world, start_pos=(x+80, y-20), end_pos=(x+100, y-20)), # top-up-right
-                Wall(world=self.world, start_pos=(x+100, y-20), end_pos=(x+100, y+40)), # top-up-right-down
-                Wall(world=self.world, start_pos=(x+70, y+40), end_pos=(x+100, y+40)), # right of door (bot-right)
+                Wall(world=self.world, start_pos=(x+100, y-20), end_pos=(x+100, y+30)), # top-up-right-down
+                Wall(world=self.world, start_pos=(x+70, y+30), end_pos=(x+100, y+30)), # right of door (bot-right)
             ]
         if tile_type == 'building_31':
             tile_walls = [
@@ -589,5 +587,15 @@ class CovidSim():
                 # create half-open wall
                 Wall(world=self.world, start_pos=(x+20, y+10), end_pos=(x+20, y+30)), # top-down(right)
                 Wall(world=self.world, start_pos=(x+20, y+60), end_pos=(x+20, y+70)),# top-down(right)
+            ]
+        if tile_type == 'building_36':
+            tile_walls = [
+                # create main walls
+                Wall(world=self.world, start_pos=(x, y+10), end_pos=(x+20, y+10)), # top-right
+                Wall(world=self.world, start_pos=(x, y+10), end_pos=(x, y+60)), # top-down(left)
+                Wall(world=self.world, start_pos=(x, y+60), end_pos=(x+20, y+60)), # bot-right
+                # create half-open wall
+                Wall(world=self.world, start_pos=(x+20, y+10), end_pos=(x+20, y+30)), # top-down(right)
+                Wall(world=self.world, start_pos=(x+20, y+50), end_pos=(x+20, y+60)),# top-down(right)
             ]
         return tile_walls

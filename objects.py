@@ -12,17 +12,16 @@ LIGHT_GREY = (70, 84, 105)
 RED = (252, 3, 65)
 
 class Person():
-    def __init__(self, world, pathfinder, x_init, y_init, collision_radius=10):
+    def __init__(self, world, pathfinder, init_min, init_max, collision_radius=10):
         # pathfinder for following the shortest path to a given goal (e.g. a building)
         self.pf = pathfinder
 
 
         # physical particle (circle) object initialization attributes
-        self.x = x_init
-        self.y = y_init
+        self.init_min = init_min # lower bound for init position
+        self.init_max = init_max # upper bound for init position
         self.collision_radius = collision_radius
         self.body = pymunk.Body(body_type=pymunk.Body.DYNAMIC)
-        self.body.position = x_init, y_init
         
         # initial velocity
         self.body.velocity = random.uniform(-100, 100), random.uniform(-100, 100)
@@ -38,7 +37,25 @@ class Person():
         # - goal_location (drawn from random distribuition, with probabilities dependend on subject)
         # -> i.e. physicists are more likely to go to the physics building
         # - age (drawn from random distribuition)
-        self.target_building = random.randint(0, 4) # [inklusive der 2. Zahl!!]; target_building = INDEX des buildings in pf.targets
+
+        # set a slight bias towards going to the library and mensa
+        # building with index 3: mensa
+        # building with index 27: library ('IKMZ')
+        self.weights = [1/35 if i not in [3,27] else 1/10 for i in range(30)]
+
+        # pick a target building
+        self.target_building = np.random.choice(range(30), p=self.weights) # [inklusive der 2. Zahl!!]; target_building = INDEX des buildings in pf.targets
+
+        # set the init position of the particle near the target to avoid large crowds in the center at initialization
+        # (when everyone needs to get to the other side of the map, they build a huge crowd in the center and nobody gets through)
+        x_init_mean, y_init_mean = np.random.normal(loc=self.pf.targets[self.target_building])
+
+        x_init = int(np.clip(np.random.normal(loc=x_init_mean, scale=50), a_min=init_min, a_max=init_max))
+        y_init = int(np.clip(np.random.normal(loc=y_init_mean, scale=50), a_min=init_min, a_max=init_max))
+        self.body.position = (x_init, y_init)
+
+        # set a random time until this person picks its next target
+        self.time_until_next_target = np.random.randint(9_000, 36_000)
         
         # add the person to the simulation
         world.add(self.body, self.shape)
@@ -50,7 +67,7 @@ class Person():
     def update_velocity(self, timestep):
         # hyperparameters
         velocity_multiplier = 30
-        vel_update_rate = 0.01 # how much of the new velocity gets injected
+        vel_update_rate = 0.015 # how much of the new velocity gets injected
         
         # make dependent on current velocity (self.body.velocity) and planned path
         x, y = self.body.position
@@ -65,8 +82,8 @@ class Person():
         y_velocity = velocity_multiplier * y_velocity
         
         old_velocity = self.body.velocity
-        additive_x_noise = 2 * random.random() - 1 # [-1 to 1], mean: 0
-        additive_y_noise = 2 * random.random() - 1 # [-1 to 1], mean: 0
+        additive_x_noise = 4 * random.random() - 2 # [-2 to 2], mean: 0
+        additive_y_noise = 4 * random.random() - 2 # [-2 to 2], mean: 0
         new_x_velocity = (1-vel_update_rate) * old_velocity[0] + vel_update_rate * x_velocity + additive_x_noise
         new_y_velocity = (1-vel_update_rate) * old_velocity[1] + vel_update_rate * y_velocity + additive_y_noise
         
@@ -77,6 +94,14 @@ class Person():
         discrete_position = (int(x), int(y))
         color = RED if self.infected else BLUE
         pg.draw.circle(screen, color, discrete_position, self.collision_radius)
+
+    def update_target(self, timestep):
+        if (timestep % self.time_until_next_target) > 0 and (timestep % self.time_until_next_target) < 50:
+            # set a new random target
+            self.target_building = np.random.choice(range(30), p=self.weights)
+
+            # set for how many timesteps the person will persue the new target
+            self.time_until_next_target = np.random.randint(9_000, 36_000)
 
 
 class Wall():
