@@ -30,12 +30,6 @@ the start of the cycle__ (i.e. 9k steps means start time $t_{\text{start}}$ of t
 | $t_{start} + 13k$ | The train closes it's door and resumes moving with the initial velocity of $v_x = -1.1 \text{ px/s}$ and $v_y = 30 \text{ px/s}$. |
 | $t_{start} + 36k$ | The train respawns at the top of the map at $x = 70$ and $y = 5$. |
 
-
-
-## Acknowledgements
-
-We would like to thank Dr. Helge Todt for guidance on the project.
-
 ## References
 
 - Deutsches Rotes Kreuz: Epidemien und Pandemien: Hilfe bei Infektionsausbrüchen. [Pandemie, Epidemie, Endemie Definitionen](https://www.drk.de/hilfe-weltweit/wann-wir-helfen/katastrophe/epidemien-pandemien/) (last accessed on 31-Oct-2022). 
