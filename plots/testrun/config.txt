@@ -1,0 +1,15 @@
+# Configuration of the experiment 'testrun' 
+# Execution time: 51.6 seconds
+
+run_name=testrun
+save_plots=True
+n_people=500
+infection_prob=0.3
+avg_incubation_time=500
+avg_infectious_time=1000
+max_timestep=3000
+start_seed=1
+n_runs=1
+speedup_factor=1
+debug_mode=False
+FPS=60
