@@ -1,4 +1,5 @@
 # Configuration of the experiment 'long_experiment' 
+# Execution time: 397.7 seconds
 
 run_name=long_experiment
 save_plots=True

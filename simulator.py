@@ -347,7 +347,7 @@ class CovidSim:
         and the walls of buildings.
         """
         # draw the background image of Golm
-        golm_img = pg.image.load("images/golm_test.png")
+        golm_img = pg.image.load("images/golm_map.png")
         golm_img = pg.transform.scale(golm_img, (self.screen_size, self.screen_size))
         self.screen.blit(golm_img, (0, 0))
 
