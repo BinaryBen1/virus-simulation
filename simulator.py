@@ -45,10 +45,13 @@ class CovidSim:
 
         # simulator setup
         self.n_people = n_people
+        self.collision_points = [] # will be filled with points where collisions occured for plotting a heatmap later
         self.status_counts = (
             []
         )  # will be filled with 4-tuples of counts for every status (susceptible/infected/infectious/removed)
         self.pf = None  # will be set later because the pathfinder needs attributes from the sim for initialization
+        
+
 
         # screen setup
         self.screen_size = 800
@@ -164,6 +167,9 @@ class CovidSim:
                         # set the density to 0.9 to signal that the person is now infected
                         # -> the infection status will be set in the next timestep automatically
                         shape.density = 0.9
+
+                        # save where the infectios collision occured
+                        self.collision_points.append(shape.body.position)
         return True
 
     def get_status_counts(self) -> Tuple[int, int, int, int]:
@@ -194,7 +200,7 @@ class CovidSim:
         speedup_factor: int = 1,
         max_timestep: int = 3000,
         return_data: bool = False,
-    ) -> Tuple[List[int], List[int], List[int], List[int]] or None:
+    ) -> Tuple[List[int], List[int], List[int], List[int], List[pymunk.vec2d.Vec2d]] or None:
         """
         Runs the simulation until it is stopped. This method sets up the background and visual (pygame) of the simulation and also
         adds people and a train to the world. It defines a custom collision handler for handling infection spread
@@ -300,6 +306,8 @@ class CovidSim:
                 infected_counts,
                 infectious_counts,
                 removed_counts,
+
+                self.collision_points
             )
 
     def events(self) -> None:
