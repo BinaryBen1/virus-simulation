@@ -297,13 +297,12 @@ class Wall:
                     wall_pixels.append((x, y))
         return wall_pixels
 
-
-def draw(self, screen: pg.Surface) -> None:
-    """
-    Draws the wall on the screen in red with the specified thickness.
-    (Note: This function is only used when the simulator is in debug mode.)
-    """
-    pg.draw.line(screen, RED, self.start_pos, self.end_pos, self.thickness)
+    def draw(self, screen: pg.Surface) -> None:
+        """
+        Draws the wall on the screen in red with the specified thickness.
+        (Note: This function is only used when the simulator is in debug mode.)
+        """
+        pg.draw.line(screen, RED, self.start_pos, self.end_pos, self.thickness)
 
 
 class Train:
