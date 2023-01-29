@@ -224,9 +224,18 @@ class Pathfinder:
         Loads a precomputed heatmap tensor from the 'heatmaps' directory.
         """
 
-        # load a precomputed heatmap tensor
-        self.heatmap_tensor = np.load("heatmaps/heatmap_tensor.npy")
-        print("using precomputed heatmaps with shape", self.heatmap_tensor.shape)
+        if os.path.isfile("heatmaps/heatmap_tensor.npy"):
+            # load a precomputed heatmap tensor
+            self.heatmap_tensor = np.load("heatmaps/heatmap_tensor.npy")
+            print("using precomputed heatmaps with shape", self.heatmap_tensor.shape)
+        
+        else:
+            # the heatmap tensor doesn't exist yet
+            raise Exception(
+                "Heatmap-Tensor not found Error: \n \
+                The heatmap tensor doesn't exist yet. Set use_precomputed_heatmaps to True and run the code again \
+                    to compute it. (this only has to be done once, set use_precomputed_heatmaps=False in all preceeding runs)"
+            )
 
     def create_world_array(self, sim) -> np.ndarray:
         """
