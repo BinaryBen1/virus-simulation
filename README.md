@@ -1,48 +1,66 @@
 ## 
-# <div align="center">Simulation of a Coronavirus Epidemic <br/> using a SIR-Model </div>
-######  <div align="center">A university project by Till Zemann & Ben Kampmann.</div>
+# <div align="center">Agentenbasierte Simulation der COVID-19 Pandemie <br/> mit einem SEIR-Modell </div>
+######  <div align="center">Ein Projekt im Modul Simulation & Modellierung von Till Zemann & Ben Kampmann.</div>
 
-<!--
-Insert here:
-- GIF of the simulation
-- graphs
 
-GIF Example:
-##### <div align="center">![simulation_gif](https://media.tenor.com/o656qFKDzeUAAAAC/rick-astley-never-gonna-give-you-up.gif) Description.
-</div>
--->
+##### <div align="center">![showcase](https://user-images.githubusercontent.com/89709351/216829859-7cd902c5-0c30-4fed-9d70-903ff3b0aac7.gif) Our Covid-19 Particle Simulator.</div>
 
-## Collision handling and infection spread
 
-When a collision between two shapes occurs, the PyMunk simulator first calls a pre_solve function (in our case the custom collision_begin function).
-We check that the two participating shapes in the collision are both people (a collision could also be a person colliding with a wall). If one of the two participants is infected, and the other one isn't, the infection status will be shared with a infection probability p (currently `0.3`).
+## How it works:
 
-## Train schedule
+The infectious particles can infect healthy ("susceptible") particles. After an incubation period, they become infectious too. We use an SEIR model to simulate the pandemic:
 
-The train follows a simple loop. In each cycle it drives from the top to the bottom of the map and then respawns at the top.
-Each cycle takes __36k pygame-timesteps__ to complete and contains the following events, __relative to
-the start of the cycle__ (i.e. 9k steps means start time $t_{\text{start}}$ of the cycle + 9k timesteps).
+- S = Susceptible
+- E = Exposed (infected but not infectious)
+- I = Infectious
+- R = Recovered/Removed
 
-| Timestep | Event |
-| ------ | ------ |
-| $t_{start}$ | The train drives from the top of the map towards the bottom of the map with a velocity $v_x = -1.1 \text{ px/s}$ and $v_y = 30 \text{ px/s}$. |
-| $t_{start} + 9k$ | The train stops at the trainstation (velocity is set to 0) and opens the door. |
-| $t_{start} + 13k$ | The train closes it's door and resumes moving with the initial velocity of $v_x = -1.1 \text{ px/s}$ and $v_y = 30 \text{ px/s}$. |
-| $t_{start} + 36k$ | The train respawns at the top of the map at $x = 70$ and $y = 5$. |
+![timeline](https://user-images.githubusercontent.com/89709351/216829246-ff6f2c29-fe20-4dc4-90d9-a2bfb8f7a3e6.png)
 
-## References
+## How to run our code
 
-- Deutsches Rotes Kreuz: Epidemien und Pandemien: Hilfe bei Infektionsausbrüchen. [Pandemie, Epidemie, Endemie Definitionen](https://www.drk.de/hilfe-weltweit/wann-wir-helfen/katastrophe/epidemien-pandemien/) (last accessed on 31-Oct-2022). 
+1. Start the [demo.ipynb](demo.ipynb) Notebook
+2. Set `install_dependencies` to `True` in the first code cell to install all necessary libraries. You can set it to `False` for all runs that you start after the first one.
 
-- AtiByte: Pymunk physics in Pyglet - p11 - collision handler. [Link](https://www.youtube.com/watch?v=ZVDm2Xtp3Lw).
+```py
+# install all dependencies
+install_dependencies = True # set to False after the first execution
+```
 
-- Arachnid56: City builder tutorial series | Creating the world grid | pygame (#1). [Link](https://www.youtube.com/watch?v=wI_pvfwcPgQ).
+3. Set your experiment parameters, for example:
 
-- Ear Of Corn Programming: Coronavirus Simulator and Analysis | Pymunk/PyGame Projects. [Link](https://www.youtube.com/watch?v=yJK5J8a7NFs).
+```py
+config = {
+    "run_name": "my_experiment_1",
+    "save_plots": True,
+    "n_people": 500,
+    "infection_prob": 0.3,
+    "avg_incubation_time":500,
+    "avg_infectious_time": 1000,
+    "max_timestep": 8000,
+    "start_seed": 1,
+    "n_runs": 3,
+    "speedup_factor": 5,
+    "debug_mode": False,
+    "FPS": 60,
+}
+```
 
-- PyData London: James Allen - Forecasting social inequality using agent-based modelling. [Link](https://www.youtube.com/watch?v=RglNX4c_dfc).
+4. For the first time that you execute our code, you have to compute the heatmaps (because the 150MB file is too large for an upload to GitHub). To do that, just set `use_precomputed_heatmaps` to `False` (the calculation might take a few minutes). In all runs that you start afterwards, please set it to `True` so that you use the saved heatmap and don't have to calculate it again.
 
-- [PyGame (game engine) documentation](https://www.pygame.org/docs/)
+```py
+pf = Pathfinder(sim, use_precomputed_heatmaps=False) # set to True after the first execution
+```
 
-- [PyMunk (physics engine) documentation](http://www.pymunk.org/en/latest/pymunk.html)
+## BibTeX Citation
 
+In case our software is used for future projects, you can refer to the following citation.
+
+```txt
+@software{zemann_kampmann_particlesim,
+  author = {Till Zemann and Ben Kampmann},
+  title = {Agentenbasierte Simulation der COVID-19 Pandemie mit einem SEIR-Modell},
+  howpublished = {\url{https://github.com/till2/particle_sim}},
+  year = {2023},
+}
+```
